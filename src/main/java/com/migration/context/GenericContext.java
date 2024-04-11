@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
+        use = JsonTypeInfo.Id.CLASS,
         property = "type")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = FileSystemContext.class),
