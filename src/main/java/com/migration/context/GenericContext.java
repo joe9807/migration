@@ -1,7 +1,9 @@
 package com.migration.context;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.migration.object.GenericObject;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.CLASS,
@@ -10,5 +12,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = FileSystemContext.class),
         @JsonSubTypes.Type(value = FakeContext.class)
 })
-public class GenericContext {
+public abstract class GenericContext {
+    @JsonIgnore
+    public abstract GenericObject getInitObject();
 }
