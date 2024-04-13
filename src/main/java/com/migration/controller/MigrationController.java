@@ -34,7 +34,7 @@ public class MigrationController {
     public CompletionStage<List<String>> startMigration(@RequestBody MigrationConfig config){
         Date date = new Date();
         return migrationService.handle(config.getSourceContext().getInitObject()).thenApply(list->{
-            log.info("ForkJoinPool parallelism {}", ForkJoinPool.commonPool().getParallelism());
+            log.info("ForkJoinPool {}", ForkJoinPool.commonPool());
             log.info("Migration took {}", Utils.getTimeElapsed(new Date().getTime() - date.getTime()));
             return list;
         });
