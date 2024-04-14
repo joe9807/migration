@@ -1,5 +1,6 @@
 package com.migration.context;
 
+import com.migration.object.FakeObject;
 import com.migration.object.GenericObject;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +16,6 @@ public class FakeContext extends GenericContext {
 
     @Override
     public GenericObject getInitObject() {
-        return null;
+        return FakeObject.builder().path(path).build();
     }
 }

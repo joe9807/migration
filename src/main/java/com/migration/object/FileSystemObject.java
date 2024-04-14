@@ -16,7 +16,7 @@ public class FileSystemObject extends GenericObject {
     private String path;
 
     @Override
-    public String create() {
+    public GenericObject create() {
         return null;
     }
 

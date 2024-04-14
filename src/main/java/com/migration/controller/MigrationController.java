@@ -1,6 +1,7 @@
 package com.migration.controller;
 
 import com.migration.configuration.MigrationConfig;
+import com.migration.object.GenericObject;
 import com.migration.service.MigrationService;
 import com.migration.utils.Utils;
 import io.swagger.v3.oas.annotations.Operation;
