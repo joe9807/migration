@@ -40,4 +40,15 @@ public class MigrationController {
             return list;
         })).flatMapMany(Flux::fromStream);
     }
+
+    @PostMapping(value = "/startFlux", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @Operation(summary = "Старт миграции по конфигу")
+    public Flux<String> startFluxMigration(@RequestBody MigrationConfig config){
+        Date date = new Date();
+        return migrationService.handleFlux(config.getSourceContext().getInitObject()).map((list)->{
+            log.info("ForkJoinPool {}", ForkJoinPool.commonPool());
+            log.info("Migration took {}", Utils.getTimeElapsed(new Date().getTime() - date.getTime()));
+            return list;
+        });
+    }
 }
