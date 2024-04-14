@@ -45,10 +45,9 @@ public class MigrationController {
     @Operation(summary = "Старт миграции по конфигу")
     public Flux<String> startFluxMigration(@RequestBody MigrationConfig config){
         Date date = new Date();
-        return migrationService.handleFlux(config.getSourceContext().getInitObject()).map((list)->{
+        return migrationService.handleFlux(config.getSourceContext().getInitObject()).doOnComplete(()->{
             log.info("ForkJoinPool {}", ForkJoinPool.commonPool());
             log.info("Migration took {}", Utils.getTimeElapsed(new Date().getTime() - date.getTime()));
-            return list;
         });
     }
 }

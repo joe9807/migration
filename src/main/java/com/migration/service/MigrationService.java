@@ -29,12 +29,12 @@ public class MigrationService {
     }
 
     private Stream<String> getWorkerMethod(GenericObject object){
-        System.out.println(object.getName());
         try {
-            Thread.sleep(1);
+            Thread.sleep(10);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        System.out.println(object.getName());
         return Stream.of(object.getName());
     }
 }
