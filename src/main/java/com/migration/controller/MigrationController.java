@@ -1,20 +1,20 @@
 package com.migration.controller;
 
 import com.migration.configuration.MigrationConfig;
-import com.migration.object.GenericObject;
 import com.migration.service.MigrationService;
 import com.migration.utils.Utils;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ForkJoinPool;
 
 @RestController
@@ -30,14 +30,14 @@ public class MigrationController {
         return MigrationConfig.getConfigExample();
     }
 
-    @PostMapping("/start")
+    @PostMapping(value = "/start", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "Старт миграции по конфигу")
-    public CompletionStage<List<String>> startMigration(@RequestBody MigrationConfig config){
+    public Flux<String> startMigration(@RequestBody MigrationConfig config){
         Date date = new Date();
-        return migrationService.handle(config.getSourceContext().getInitObject()).thenApply(list->{
+        return Mono.fromFuture(migrationService.handle(config.getSourceContext().getInitObject()).thenApply(list->{
             log.info("ForkJoinPool {}", ForkJoinPool.commonPool());
             log.info("Migration took {}", Utils.getTimeElapsed(new Date().getTime() - date.getTime()));
             return list;
-        });
+        })).flatMapMany(Flux::fromStream);
     }
 }
