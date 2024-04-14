@@ -34,7 +34,7 @@ public class MigrationService {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println(object.getName());
+        System.out.printf("%-40s: %s%n", Thread.currentThread().getName(), object.getName());
         return Stream.of(object.getName());
     }
 }
