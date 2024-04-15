@@ -30,7 +30,7 @@ public class MigrationController {
         return MigrationConfig.getConfigExample();
     }
 
-    @PostMapping(value = "/start", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PostMapping(value = "/startFutures", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "Старт миграции по конфигу")
     public Flux<String> startMigration(@RequestBody MigrationConfig config){
         Date date = new Date();
