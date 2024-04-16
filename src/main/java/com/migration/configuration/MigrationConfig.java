@@ -6,9 +6,12 @@ import com.migration.context.GenericContext;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 @Builder
 public class MigrationConfig {
+    private UUID id;
     private GenericContext sourceContext;
     private GenericContext targetContext;
 
