@@ -2,6 +2,7 @@ package com.migration.object;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.stream.Stream;
 
 @Data
 @Builder
+@EqualsAndHashCode(callSuper = true)
 public class FileSystemObject extends GenericObject {
     private String path;
 

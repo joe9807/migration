@@ -1,13 +1,14 @@
 package com.migration.context;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.migration.object.FileSystemObject;
 import com.migration.object.GenericObject;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Builder
 @NoArgsConstructor
