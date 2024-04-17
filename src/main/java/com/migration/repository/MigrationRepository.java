@@ -2,22 +2,27 @@ package com.migration.repository;
 
 import com.migration.entity.MigrationObject;
 import com.migration.entity.MigrationObjectStatus;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.r2dbc.repository.Modifying;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 @Repository
-public interface MigrationRepository extends CrudRepository<MigrationObject, Long> {
-    List<MigrationObject> findByStatusAndConfigId(MigrationObjectStatus status, UUID configId);
+public interface MigrationRepository extends R2dbcRepository<MigrationObject, Long> {
+    Flux<MigrationObject> findByStatusAndConfigId(MigrationObjectStatus status, UUID configId);
+
+    default Mono<Void> capture(List<Long> ids, MigrationObjectStatus status){
+        return ids.size() == 0? Mono.empty():update(ids, status);
+    }
 
     @Transactional
     @Modifying
-    @Query("update com.migration.entity.MigrationObject o set o.status = (?2) where o.id in (?1)")
-    void capture(List<Long> ids, MigrationObjectStatus status);
+    @Query("UPDATE objects set status = :status where id IN (:ids)")
+    Mono<Void> update(List<Long> ids, MigrationObjectStatus status);
 }

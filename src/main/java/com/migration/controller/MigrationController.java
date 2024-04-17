@@ -4,8 +4,8 @@ import com.migration.configuration.MigrationConfig;
 import com.migration.service.MigrationService;
 import com.migration.utils.Utils;
 import io.swagger.v3.oas.annotations.Operation;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,14 +15,15 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
+import java.util.stream.IntStream;
 
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class MigrationController {
-
-    @Autowired
-    private MigrationService migrationService;
+    private final MigrationService migrationService;
 
     @GetMapping("/config")
     @Operation(summary = "Получить пример конфига миграции")
@@ -49,5 +50,18 @@ public class MigrationController {
             log.info("ForkJoinPool {}", ForkJoinPool.commonPool());
             log.info("Migration took {}", Utils.getTimeElapsed(new Date().getTime() - date.getTime()));
         });
+    }
+
+    @PostMapping(value = "/startExecutor")
+    @Operation(summary = "Старт миграции via Executor")
+    public String startExecutorMigration(@RequestBody MigrationConfig config, Integer count){
+        IntStream.range(0, count).forEach(index->{
+            config.setId(UUID.randomUUID());
+            Date date = new Date();
+            migrationService.handleExecutor(config);
+            log.info("{}: Time elapsed {}", index, Utils.getTimeElapsed(new Date().getTime()-date.getTime()));
+        });
+        log.info("----------------");
+        return "migration finished";
     }
 }

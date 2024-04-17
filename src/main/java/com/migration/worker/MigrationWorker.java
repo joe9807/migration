@@ -35,9 +35,9 @@ public class MigrationWorker implements Runnable {
         migrationRepository.saveAll(migrationObject.getSourceObject().getChildren()
                 .stream()
                 .map(child -> MigrationObject.builder().sourcePath(child.getName()).status(MigrationObjectStatus.NEW).configId(migrationObject.getConfigId()).build())
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList())).subscribe();
 
         migrationObject.setStatus(MigrationObjectStatus.DONE);
-        migrationRepository.save(migrationObject);
+        migrationRepository.save(migrationObject).toFuture().join();
     }
 }
