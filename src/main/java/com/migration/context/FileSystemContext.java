@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.io.File;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Builder
@@ -18,6 +20,6 @@ public class FileSystemContext extends GenericContext {
 
     @Override
     public GenericObject getInitObject() {
-        return FileSystemObject.builder().path(path).build();
+        return FileSystemObject.builder().file(new File(path)).build();
     }
 }

@@ -49,13 +49,16 @@ public class MigrationService {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.printf("%-40s: %s%n", Thread.currentThread().getName(), object.getName());
-        return Stream.of(object.getName());
+        System.out.printf("%-40s: %s%n", Thread.currentThread().getName(), object.getPath());
+        return Stream.of(object.getPath());
     }
 
     public void handleExecutor(MigrationConfig config){
         migrationRepository.save(MigrationObject.builder()
-                .sourcePath(config.getSourceContext().getInitObject().getName())
+                .type(config.getSourceContext().getInitObject().getType())
+                .sourceId(config.getSourceContext().getInitObject().getId())
+                .sourcePath(config.getSourceContext().getInitObject().getPath())
+                .targetPath(config.getTargetContext().getInitObject().getPath())
                 .status(MigrationObjectStatus.NEW)
                 .configId(config.getId())
                 .build()).toFuture().join();

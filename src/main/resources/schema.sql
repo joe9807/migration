@@ -1,5 +1,6 @@
 CREATE TABLE if not exists objects (
   id BIGSERIAL PRIMARY KEY,
+  type VARCHAR(30),
   source_id VARCHAR(500),
   source_path VARCHAR(500),
   target_id VARCHAR(500),

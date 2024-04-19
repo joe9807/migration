@@ -6,6 +6,7 @@ import com.migration.context.GenericContext;
 import lombok.Builder;
 import lombok.Data;
 
+import java.io.File;
 import java.util.UUID;
 
 @Data

@@ -69,6 +69,9 @@ public class MigrationController {
                 log.info("{}: Time elapsed {}", index, Utils.getTimeElapsed(new Date().getTime()-date.getTime()));
             });
             log.info("----------------");
+        }).exceptionally(e->{
+            e.printStackTrace();
+            return CompletableFuture.allOf().join();
         });
         return String.format("Migrations triggered. Config Ids: %s", ids.stream().map(UUID::toString).collect(Collectors.joining(", ")));
     }
