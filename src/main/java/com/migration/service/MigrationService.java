@@ -15,9 +15,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -65,7 +63,7 @@ public class MigrationService {
     }
 
     public void run(UUID configId){
-        ThreadPoolExecutor migrationExecutor = getMigrationExecutor();
+        ThreadPoolExecutor migrationExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
         long executedTasks = 0L;
 
         do {
@@ -74,7 +72,7 @@ public class MigrationService {
             }
 
             if (!isActive(migrationExecutor, executedTasks)) {
-                List<MigrationObject> objects = getMigrationObjects(configId);
+                List<MigrationObject> objects = getNewMigrationObjects(configId);
                 if (objects.size() == 0) break;
             }
         } while (true);
@@ -85,12 +83,12 @@ public class MigrationService {
         return migrationExecutor.getActiveCount() != 0 || !migrationExecutor.getQueue().isEmpty() || migrationExecutor.getCompletedTaskCount() != executedTasks;
     }
 
-    private List<MigrationObject> getMigrationObjects(UUID configId){
+    private List<MigrationObject> getNewMigrationObjects(UUID configId){
         return migrationRepository.findByStatusAndConfigId(MigrationObjectStatus.NEW, configId).collectList().toFuture().join();
     }
 
     private long executeTasks(ThreadPoolExecutor migrationExecutor, UUID configId) {
-        List<MigrationWorker> workers = getMigrationObjects(configId)
+        List<MigrationWorker> workers = getNewMigrationObjects(configId)
                 .stream()
                 .map(object-> new MigrationWorker(object, migrationRepository))
                 .collect(Collectors.toList());
@@ -107,14 +105,7 @@ public class MigrationService {
         return workers.size();
     }
 
-    public ThreadPoolExecutor getMigrationExecutor(){
-        return (ThreadPoolExecutor) Executors.newFixedThreadPool(50, new ThreadFactory() {
-            final AtomicInteger count = new AtomicInteger();
-
-            @Override
-            public Thread newThread(Runnable r) {
-                return new Thread(r, "hyper-process-thread-"+count.incrementAndGet());
-            }
-        });
+    public Flux<MigrationObject> getAllMigrationObjects(UUID configId){
+        return migrationRepository.findByConfigId(configId);
     }
 }

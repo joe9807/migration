@@ -23,6 +23,7 @@ public class MigrationWorker implements Runnable {
     @Override
     public void run() {
         try {
+            Thread.sleep(100);
             saveAll();
             //log.info("Object {} was migrated", migrationObject.getSourcePath());
         } catch (Exception e){
