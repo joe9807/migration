@@ -83,8 +83,9 @@ public class MigrationController {
     public Flux<ServerSentEvent<String>> getMigrationObjects(UUID configId){
         System.out.println("==========================");
         return migrationService.getAllMigrationObjects(configId).map(object-> ServerSentEvent.<String>builder()
-                .id(String.format("%s - %s", object.getId(), object.getSourcePath()))
+                .id(String.valueOf(object.getId()))
                 .event("message")
-                .data(object.getSourcePath()).build());
+                .data(object.getSourcePath())
+                .build());
     }
 }
