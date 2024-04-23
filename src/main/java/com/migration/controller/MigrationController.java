@@ -1,7 +1,6 @@
 package com.migration.controller;
 
 import com.migration.configuration.MigrationConfig;
-import com.migration.entity.MigrationObject;
 import com.migration.service.MigrationService;
 import com.migration.utils.Utils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -61,7 +60,7 @@ public class MigrationController {
     @PostMapping(value = "/startExecutor")
     @Operation(summary = "Старт миграции via Executor")
     public String startExecutorMigration(@RequestBody MigrationConfig config, Integer count){
-        List<UUID> ids = IntStream.range(0, count).mapToObj(index->UUID.randomUUID()).collect(Collectors.toList());
+        List<UUID> ids = IntStream.range(0, count).mapToObj(index->UUID.randomUUID()).toList();
         CompletableFuture.runAsync(() -> {
             IntStream.range(0, count).forEach(index->{
                 config.setId(ids.get(index));

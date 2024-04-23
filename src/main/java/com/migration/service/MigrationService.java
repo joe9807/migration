@@ -94,7 +94,7 @@ public class MigrationService {
         List<MigrationWorker> workers = getNewMigrationObjects(configId)
                 .stream()
                 .map(object-> new MigrationWorker(object, migrationRepository))
-                .collect(Collectors.toList());
+                .toList();
 
         migrationRepository.capture(workers
                 .stream()
