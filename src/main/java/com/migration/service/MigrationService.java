@@ -109,6 +109,6 @@ public class MigrationService {
     }
 
     public Flux<MigrationObject> getAllMigrationObjects(UUID configId){
-        return migrationRepository.findByConfigId(configId);
+        return migrationRepository.findByConfigIdOrderByIdAsc(configId);
     }
 }

@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface MigrationRepository extends R2dbcRepository<MigrationObject, Long> {
-    Flux<MigrationObject> findByConfigId(UUID configId);
+    Flux<MigrationObject> findByConfigIdOrderByIdAsc(UUID configId);
     Flux<MigrationObject> findByStatusAndConfigId(MigrationObjectStatus status, UUID configId);
 
     default Mono<Void> capture(List<Long> ids, MigrationObjectStatus status){

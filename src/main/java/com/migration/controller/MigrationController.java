@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -59,7 +61,7 @@ public class MigrationController {
     @PostMapping(value = "/startExecutor")
     @Operation(summary = "Старт миграции via Executor")
     public String startExecutorMigration(@RequestBody MigrationConfig config, Integer count){
-        List<UUID> ids = IntStream.range(0, count).mapToObj(index->UUID.randomUUID()).collect(Collectors.toList());;
+        List<UUID> ids = IntStream.range(0, count).mapToObj(index->UUID.randomUUID()).collect(Collectors.toList());
         CompletableFuture.runAsync(() -> {
             IntStream.range(0, count).forEach(index->{
                 config.setId(ids.get(index));
@@ -76,9 +78,14 @@ public class MigrationController {
         return String.format("Migrations triggered. Config Ids: %s", ids.stream().map(UUID::toString).collect(Collectors.joining(", ")));
     }
 
-    @GetMapping(value = "/monitor", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @CrossOrigin
+    @GetMapping(value = "/monitor")
     @Operation(summary = "Мониторинг процесса миграции")
-    public Flux<String> getMigrationObjects(UUID configId){
-        return migrationService.getAllMigrationObjects(configId).map(MigrationObject::getSourcePath);
+    public Flux<ServerSentEvent<String>> getMigrationObjects(UUID configId){
+        System.out.println("==========================");
+        return migrationService.getAllMigrationObjects(configId).map(object-> ServerSentEvent.<String>builder()
+                .id(String.format("%s - %s", object.getId(), object.getSourcePath()))
+                .event("message")
+                .data(object.getSourcePath()).build());
     }
 }
