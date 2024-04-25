@@ -8,21 +8,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @RestController
 @Slf4j
@@ -60,29 +53,25 @@ public class MigrationController {
     @PostMapping(value = "/startExecutor")
     @Operation(summary = "Старт миграции via Executor")
     public String startExecutorMigration(@RequestBody MigrationConfig config, Integer count){
-        List<UUID> ids = IntStream.range(0, count).mapToObj(index->UUID.randomUUID()).toList();
+        config.setId(UUID.fromString("66c3f250-b76b-4cad-be8c-58c7ed91784f"));
         CompletableFuture.runAsync(() -> {
-            IntStream.range(0, count).forEach(index->{
-                config.setId(ids.get(index));
-                Date date = new Date();
-                log.info("Started migration with id: {}; {}; {}", config.getId(), config.getSourceContext(), config.getTargetContext());
-                migrationService.handleExecutor(config);
-                log.info("{}: Time elapsed {}", index, Utils.getTimeElapsed(new Date().getTime()-date.getTime()));
-            });
-            log.info("----------------");
+            Date date = new Date();
+            log.info("Started migration with id: {}; {}; {}", config.getId(), config.getSourceContext(), config.getTargetContext());
+            migrationService.handleExecutor(config);
+            log.info("Time elapsed {}", Utils.getTimeElapsed(new Date().getTime()-date.getTime()));
         }).exceptionally(e->{
             e.printStackTrace();
             return CompletableFuture.allOf().join();
         });
-        return String.format("Migrations triggered. Config Ids: %s", ids.stream().map(UUID::toString).collect(Collectors.joining(", ")));
+        return String.format("Migration started with id: %s", config.getId());
     }
 
     @CrossOrigin
     @GetMapping(value = "/monitor")
     @Operation(summary = "Мониторинг процесса миграции")
-    public Flux<ServerSentEvent<String>> getMigrationObjects(UUID configId){
-        System.out.println("==========================");
-        return migrationService.getAllMigrationObjects(configId).map(object-> ServerSentEvent.<String>builder()
+    public Flux<ServerSentEvent<String>> getMigrationObjects(UUID configId, Long id){
+        log.info("Fetch MigrationObjects for configId '{}' starting with '{}' id", configId, id);
+        return migrationService.getAllMigrationObjects(configId, id).map(object-> ServerSentEvent.<String>builder()
                 .id(String.valueOf(object.getId()))
                 .event("message")
                 .data(object.getSourcePath())

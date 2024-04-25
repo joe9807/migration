@@ -114,7 +114,7 @@ public class MigrationService {
         return workers.size();
     }
 
-    public Flux<MigrationObject> getAllMigrationObjects(UUID configId){
-        return migrationRepository.findByConfigIdOrderByIdAsc(configId);
+    public Flux<MigrationObject> getAllMigrationObjects(UUID configId, Long id){
+        return migrationRepository.findByConfigIdOrderByIdAsc(configId, id);
     }
 }

@@ -13,7 +13,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface MigrationRepository extends R2dbcRepository<MigrationObject, Long> {
-    Flux<MigrationObject> findByConfigIdOrderByIdAsc(UUID configId);
+    @Query("select * from objects where config_id = :configId and id > :id order by id ")
+    Flux<MigrationObject> findByConfigIdOrderByIdAsc(UUID configId, Long id);
 
     @Query("select * from objects where status = :status and config_id = :configId limit 50")
     Flux<MigrationObject> findByStatusAndConfigIdWithLimit(MigrationObjectStatus status, UUID configId);
