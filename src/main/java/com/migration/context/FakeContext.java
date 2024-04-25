@@ -27,9 +27,9 @@ public class FakeContext extends GenericContext {
 
     public static FakeContext getFakeContextExample(){
         return FakeContext.builder()
-                .levelsCount(2)
-                .containersCount(2)
-                .contentCount(2)
+                .levelsCount(10)
+                .containersCount(10)
+                .contentCount(10)
                 .build();
     }
 
