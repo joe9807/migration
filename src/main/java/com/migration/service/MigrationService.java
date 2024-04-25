@@ -3,6 +3,7 @@ package com.migration.service;
 import com.migration.configuration.MigrationConfig;
 import com.migration.entity.MigrationObject;
 import com.migration.entity.MigrationObjectStatus;
+import com.migration.mapper.MigrationMapper;
 import com.migration.object.GenericObject;
 import com.migration.repository.MigrationRepository;
 import com.migration.worker.MigrationWorker;
@@ -24,6 +25,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class MigrationService {
     private final MigrationRepository migrationRepository;
+    private final MigrationMapper mapper;
 
     public CompletableFuture<Stream<String>> handle(GenericObject object){
         CompletableFuture<Stream<String>> futureObject = CompletableFuture.completedFuture(object).thenApplyAsync(this::getWorkerMethod);
@@ -62,20 +64,20 @@ public class MigrationService {
                 .status(MigrationObjectStatus.NEW)
                 .configId(config.getId())
                 .build()).toFuture().join();
-        run(config.getId());
+        run(config);
     }
 
-    public void run(UUID configId){
+    public void run(MigrationConfig config){
         ThreadPoolExecutor migrationExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
         long executedTasks = 0L;
 
         do {
             if (migrationExecutor.getQueue().isEmpty()) {
-                executedTasks += executeTasks(migrationExecutor, configId);
+                executedTasks += executeTasks(migrationExecutor, config);
             }
 
             if (!isActive(migrationExecutor, executedTasks)) {
-                List<MigrationObject> objects = getNewMigrationObjects(configId);
+                List<MigrationObject> objects = getNewMigrationObjects(config);
                 if (objects.size() == 0) break;
             }
         } while (true);
@@ -86,14 +88,18 @@ public class MigrationService {
         return migrationExecutor.getActiveCount() != 0 || !migrationExecutor.getQueue().isEmpty() || migrationExecutor.getCompletedTaskCount() != executedTasks;
     }
 
-    private List<MigrationObject> getNewMigrationObjects(UUID configId){
-        return migrationRepository.findByStatusAndConfigId(MigrationObjectStatus.NEW, configId).collectList().toFuture().join();
+    private List<MigrationObject> getNewMigrationObjects(MigrationConfig config){
+        return migrationRepository.findByStatusAndConfigIdWithLimit(MigrationObjectStatus.NEW, config.getId()).collectList().toFuture().join();
     }
 
-    private long executeTasks(ThreadPoolExecutor migrationExecutor, UUID configId) {
-        List<MigrationWorker> workers = getNewMigrationObjects(configId)
+    private long executeTasks(ThreadPoolExecutor migrationExecutor, MigrationConfig config) {
+        List<MigrationWorker> workers = getNewMigrationObjects(config)
                 .stream()
-                .map(object-> new MigrationWorker(object, migrationRepository))
+                .peek(migrationObject -> {
+                    migrationObject.setSourceContext(config.getSourceContext());
+                    migrationObject.setTargetContext(config.getTargetContext());
+                })
+                .map(object-> new MigrationWorker(object, migrationRepository, mapper))
                 .toList();
 
         migrationRepository.capture(workers

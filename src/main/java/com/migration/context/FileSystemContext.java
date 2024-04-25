@@ -22,4 +22,9 @@ public class FileSystemContext extends GenericContext {
     public GenericObject getInitObject() {
         return FileSystemObject.builder().file(new File(path)).build();
     }
+
+    @Override
+    public GenericObject getObject(String id, String path, String type) {
+        return FileSystemObject.builder().file(new File(id == null?path:id)).type(type).build();
+    }
 }

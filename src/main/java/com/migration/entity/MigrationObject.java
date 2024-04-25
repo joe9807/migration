@@ -1,22 +1,17 @@
 package com.migration.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.migration.object.FakeObject;
-import com.migration.object.FileSystemObject;
+import com.migration.context.GenericContext;
 import com.migration.object.GenericObject;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.io.File;
 import java.util.UUID;
 
 @Data
@@ -40,13 +35,21 @@ public class MigrationObject {
     private UUID configId;
 
     @JsonIgnore
+    @Transient
+    private GenericContext sourceContext;
+
+    @JsonIgnore
+    @Transient
+    private GenericContext targetContext;
+
+    @JsonIgnore
     public GenericObject getSourceObject(){
-        return FileSystemObject.builder().file(new File(sourceId)).build();
+        return sourceContext.getObject(sourceId, sourcePath, type);
     }
 
     @JsonIgnore
     public GenericObject getTargetObject(){
-        //return FakeObject.builder().id(targetId).path(targetPath).build();
-        return FileSystemObject.builder().file(new File(targetPath)).directory(type.equalsIgnoreCase("CONTAINER")).build();
+        GenericObject targetObject = targetContext.getObject(targetId, targetPath, type);
+        return targetObject;
     }
 }

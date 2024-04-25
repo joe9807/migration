@@ -65,7 +65,7 @@ public class MigrationController {
             IntStream.range(0, count).forEach(index->{
                 config.setId(ids.get(index));
                 Date date = new Date();
-                log.info("Started migration with configId: {}", config.getId());
+                log.info("Started migration with id: {}; {}; {}", config.getId(), config.getSourceContext(), config.getTargetContext());
                 migrationService.handleExecutor(config);
                 log.info("{}: Time elapsed {}", index, Utils.getTimeElapsed(new Date().getTime()-date.getTime()));
             });

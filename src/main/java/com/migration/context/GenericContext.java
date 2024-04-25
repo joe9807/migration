@@ -15,4 +15,7 @@ import com.migration.object.GenericObject;
 public abstract class GenericContext {
     @JsonIgnore
     public abstract GenericObject getInitObject();
+
+    @JsonIgnore
+    public abstract GenericObject getObject(String id, String path, String type);
 }

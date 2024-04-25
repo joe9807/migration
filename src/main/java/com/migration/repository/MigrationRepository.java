@@ -14,7 +14,9 @@ import java.util.UUID;
 
 public interface MigrationRepository extends R2dbcRepository<MigrationObject, Long> {
     Flux<MigrationObject> findByConfigIdOrderByIdAsc(UUID configId);
-    Flux<MigrationObject> findByStatusAndConfigId(MigrationObjectStatus status, UUID configId);
+
+    @Query("select * from objects where status = :status and config_id = :configId limit 50")
+    Flux<MigrationObject> findByStatusAndConfigIdWithLimit(MigrationObjectStatus status, UUID configId);
 
     default Mono<Void> capture(List<Long> ids, MigrationObjectStatus status){
         return ids.size() == 0? Mono.empty():update(ids, status);

@@ -17,10 +17,21 @@ public class MigrationConfig {
     private GenericContext targetContext;
 
     public static MigrationConfig getConfigExample(){
+        return getFileSystemToFakeExample();
+    }
+
+    private static MigrationConfig getFakeToFakeExample(){
+        return MigrationConfig.builder()
+                .sourceContext(FakeContext.getFakeContextExample())
+                .targetContext(FakeContext.getFakeContextExample())
+                .build();
+    }
+
+    private static MigrationConfig getFileSystemToFakeExample(){
         String path = "D:\\DIFFERENT\\firefox\\";
         return MigrationConfig.builder()
                 .sourceContext(FileSystemContext.builder().path(path).build())
-                .targetContext(FakeContext.builder().path(path).build())
+                .targetContext(FakeContext.getFakeContextExample())
                 .build();
     }
 }

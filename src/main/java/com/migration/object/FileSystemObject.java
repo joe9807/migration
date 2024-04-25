@@ -1,5 +1,6 @@
 package com.migration.object;
 
+import com.migration.context.FileSystemContext;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -16,13 +17,13 @@ import java.util.stream.Stream;
 @EqualsAndHashCode(callSuper = true)
 public class FileSystemObject extends GenericObject {
     private File file;
-    private boolean directory;
+    private String type;
 
     @Override
     public GenericObject create() {
         if (!file.exists()) {
             try {
-                boolean result = isDirectory() ? file.mkdirs() : file.createNewFile();
+                boolean result = type.equalsIgnoreCase("CONTAINER") ? file.mkdirs() : file.createNewFile();
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -55,6 +56,10 @@ public class FileSystemObject extends GenericObject {
 
     @Override
     public String getType() {
-        return file.isDirectory()?"CONTAINER":"CONTENT";
+        if (file.exists()) {
+            return file.isDirectory()?"CONTAINER":"CONTENT";
+        }
+
+        return type;
     }
 }
