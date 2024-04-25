@@ -1,5 +1,6 @@
 package com.migration.context;
 
+import com.migration.enums.MigrationObjectType;
 import com.migration.object.FileSystemObject;
 import com.migration.object.GenericObject;
 import lombok.AllArgsConstructor;
@@ -24,7 +25,9 @@ public class FileSystemContext extends GenericContext {
     }
 
     @Override
-    public GenericObject getObject(String id, String path, String type) {
-        return FileSystemObject.builder().file(new File(id == null?path:id)).type(type).build();
+    public GenericObject getObject(String id, String path, MigrationObjectType type) {
+        FileSystemObject object = FileSystemObject.builder().file(new File(id == null?path:id)).build();
+        object.setType(type);
+        return object;
     }
 }

@@ -1,6 +1,7 @@
 package com.migration.object;
 
 import com.migration.context.FakeContext;
+import com.migration.enums.MigrationObjectType;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -15,7 +16,6 @@ import java.util.stream.IntStream;
 public class FakeObject extends GenericObject{
     private FakeContext context;
 
-    private String type;
     private String path;
 
     private int levelNumber;
@@ -24,19 +24,22 @@ public class FakeObject extends GenericObject{
 
     @Override
     public GenericObject create() {
-        return FakeObject.builder().type(type).path(path).build();
+        FakeObject object = FakeObject.builder().path(path).build();
+        object.setType(type);
+        return object;
     }
 
     @Override
     public List<GenericObject> getChildren() {
-        if (type.equalsIgnoreCase("CONTENT")) return new ArrayList<>();
+        if (type == MigrationObjectType.CONTENT) return new ArrayList<>();
 
         List<GenericObject> children = new ArrayList<>();
 
         if (levelNumber == context.getLevelsCount()) {
             children.addAll(IntStream.range(0, context.getContentCount())
                     .mapToObj(contentNumber-> {
-                        FakeObject child = FakeObject.builder().type("CONTENT").contentNumber(contentNumber).levelNumber(levelNumber+1).build();
+                        FakeObject child = FakeObject.builder().contentNumber(contentNumber).levelNumber(levelNumber+1).build();
+                        child.setType(MigrationObjectType.CONTENT);
                         child.setPath(path+"/"+child.getName());
                         return child;
                     })
@@ -47,7 +50,8 @@ public class FakeObject extends GenericObject{
 
         children.addAll(IntStream.range(0, context.getContainersCount())
                 .mapToObj(containerNumber-> {
-                    FakeObject child = FakeObject.builder().type("CONTAINER").containerNumber(containerNumber).levelNumber(levelNumber+1).build();
+                    FakeObject child = FakeObject.builder().containerNumber(containerNumber).levelNumber(levelNumber+1).build();
+                    child.setType(MigrationObjectType.CONTAINER);
                     child.setPath(path+"/"+child.getName());
                     return child;
                 })
@@ -55,7 +59,8 @@ public class FakeObject extends GenericObject{
 
         children.addAll(IntStream.range(0, context.getContentCount())
                 .mapToObj(contentNumber-> {
-                    FakeObject child = FakeObject.builder().type("CONTENT").contentNumber(contentNumber).levelNumber(levelNumber+1).build();
+                    FakeObject child = FakeObject.builder().contentNumber(contentNumber).levelNumber(levelNumber+1).build();
+                    child.setType(MigrationObjectType.CONTENT);
                     child.setPath(path+"/"+child.getName());
                     return child;
                 })
@@ -66,20 +71,15 @@ public class FakeObject extends GenericObject{
 
     @Override
     public String getId() {
-        return String.format("%s;%s", levelNumber, (type.equalsIgnoreCase("CONTENT")?contentNumber:containerNumber));
+        return String.format("%s;%s", levelNumber, (type == MigrationObjectType.CONTENT?contentNumber:containerNumber));
     }
 
     @Override
     public String getName() {
-        if (type.equalsIgnoreCase("CONTAINER")) {
+        if (type == MigrationObjectType.CONTAINER) {
             return String.format("level - %s; container - %s", levelNumber, containerNumber);
         } else {
             return String.format("level - %s; content - %s.txt", levelNumber, contentNumber);
         }
-    }
-
-    @Override
-    public String getType() {
-        return type;
     }
 }

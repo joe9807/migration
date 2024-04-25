@@ -1,5 +1,6 @@
 package com.migration.context;
 
+import com.migration.enums.MigrationObjectType;
 import com.migration.object.FakeObject;
 import com.migration.object.GenericObject;
 import lombok.*;
@@ -17,7 +18,8 @@ public class FakeContext extends GenericContext {
 
     @Override
     public GenericObject getInitObject() {
-        FakeObject initObject = FakeObject.builder().type("CONTAINER").context(this).build();
+        FakeObject initObject = FakeObject.builder().context(this).build();
+        initObject.setType(MigrationObjectType.CONTAINER);
         initObject.setPath(initObject.getName());
         return initObject;
     }
@@ -31,15 +33,16 @@ public class FakeContext extends GenericContext {
     }
 
     @Override
-    public GenericObject getObject(String id, String path, String type) {
-        FakeObject fakeObject = FakeObject.builder().type(type).path(path).context(this).build();
+    public GenericObject getObject(String id, String path, MigrationObjectType type) {
+        FakeObject fakeObject = FakeObject.builder().path(path).context(this).build();
+        fakeObject.setType(type);
 
         if (id != null) {
             int levelNumber = Integer.parseInt(id.split(";")[0]);
             int number = Integer.parseInt(id.split(";")[1]);
 
             fakeObject.setLevelNumber(levelNumber);
-            if (type.equalsIgnoreCase("CONTAINER")) {
+            if (type == MigrationObjectType.CONTAINER) {
                 fakeObject.setContainerNumber(number);
             } else {
                 fakeObject.setContentNumber(number);

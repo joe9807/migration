@@ -3,6 +3,7 @@ package com.migration.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.migration.context.GenericContext;
 import com.migration.enums.MigrationObjectStatus;
+import com.migration.enums.MigrationObjectType;
 import com.migration.object.GenericObject;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -26,7 +27,8 @@ public class MigrationObject {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String type;
+    @Enumerated(EnumType.STRING)
+    private MigrationObjectType type;
     private String sourceId;
     private String sourcePath;
     private String targetId;
