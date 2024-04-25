@@ -52,15 +52,15 @@ public class MigrationController {
 
     @PostMapping(value = "/startExecutor")
     @Operation(summary = "Старт миграции via Executor")
-    public String startExecutorMigration(@RequestBody MigrationConfig config, Integer count){
-        config.setId(UUID.fromString("66c3f250-b76b-4cad-be8c-58c7ed91784f"));
+    public String startExecutorMigration(@RequestBody MigrationConfig config){
+        config.setId(UUID.randomUUID());
         CompletableFuture.runAsync(() -> {
             Date date = new Date();
             log.info("Started migration with id: {}; {}; {}", config.getId(), config.getSourceContext(), config.getTargetContext());
             migrationService.handleExecutor(config);
             log.info("Time elapsed {}", Utils.getTimeElapsed(new Date().getTime()-date.getTime()));
         }).exceptionally(e->{
-            e.printStackTrace();
+            log.error("Error during migration: ", e);
             return CompletableFuture.allOf().join();
         });
         return String.format("Migration started with id: %s", config.getId());
