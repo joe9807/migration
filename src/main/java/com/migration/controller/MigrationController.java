@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -55,7 +56,13 @@ public class MigrationController {
 
     @PostMapping(value = "/startExecutor")
     @Operation(summary = "Старт миграции via Executor")
-    public String startExecutorMigration(@RequestBody MigrationConfig config){
+    @Parameter(name = "singleMigration", description = "Очистить предыдущие миграции", schema = @Schema(type = "boolean", defaultValue = "false"))
+    public String startExecutorMigration(@RequestBody MigrationConfig config, boolean singleMigration){
+        if (singleMigration) {
+            log.info("Clear previous migrations!");
+            migrationService.deleteAll();
+        }
+
         config.setId(UUID.randomUUID());
         CompletableFuture.runAsync(() -> {
             Date date = new Date();
@@ -66,7 +73,7 @@ public class MigrationController {
             log.error("Error during migration: ", e);
             return CompletableFuture.allOf().join();
         });
-        return String.format("Migration started with id: %s", config.getId());
+        return String.format("Migration started at %s with id %s", LocalDateTime.now(), config.getId());
     }
 
     @CrossOrigin

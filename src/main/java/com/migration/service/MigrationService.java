@@ -128,4 +128,8 @@ public class MigrationService {
     public Flux<MigrationObject> getAllMigrationObjects(UUID configId, Long id){
         return migrationRepository.findByConfigIdOrderByIdAsc(configId, id);
     }
+
+    public void deleteAll(){
+        migrationRepository.deleteAll().toFuture().join();
+    }
 }
