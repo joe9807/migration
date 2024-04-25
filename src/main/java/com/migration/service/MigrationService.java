@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -25,7 +26,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class MigrationService {
     private final MigrationRepository migrationRepository;
-    private final MigrationMapper mapper;
+    private final Map<String, MigrationMapper> mappers;
 
     public CompletableFuture<Stream<String>> handle(GenericObject object){
         CompletableFuture<Stream<String>> futureObject = CompletableFuture.completedFuture(object).thenApplyAsync(this::getWorkerMethod);
@@ -69,11 +70,12 @@ public class MigrationService {
 
     public void run(MigrationConfig config){
         ThreadPoolExecutor migrationExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
-        long executedTasks = 0L;
+        MigrationMapper mapper = getMigrationMapper(config);
 
+        long executedTasks = 0L;
         do {
             if (migrationExecutor.getQueue().isEmpty()) {
-                executedTasks += executeTasks(migrationExecutor, config);
+                executedTasks += executeTasks(migrationExecutor, config, mapper);
             }
 
             if (!isActive(migrationExecutor, executedTasks)) {
@@ -92,7 +94,7 @@ public class MigrationService {
         return migrationRepository.findByStatusAndConfigIdWithLimit(MigrationObjectStatus.NEW, config.getId()).collectList().toFuture().join();
     }
 
-    private long executeTasks(ThreadPoolExecutor migrationExecutor, MigrationConfig config) {
+    private long executeTasks(ThreadPoolExecutor migrationExecutor, MigrationConfig config, MigrationMapper mapper) {
         List<MigrationWorker> workers = getNewMigrationObjects(config)
                 .stream()
                 .peek(migrationObject -> {
@@ -112,6 +114,15 @@ public class MigrationService {
 
         workers.forEach(migrationExecutor::execute);
         return workers.size();
+    }
+
+    private MigrationMapper getMigrationMapper(MigrationConfig config){
+        return mappers.entrySet()
+                .stream()
+                .filter(entry -> entry.getKey().equalsIgnoreCase(Character.toLowerCase(config.getType().name().charAt(0)) + config.getType().name().substring(1)+"MapperImpl"))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElseThrow(()-> new RuntimeException("There is no corresponding mapper for "+config.getType()+" MigrationType. Please implement this mapper!"));
     }
 
     public Flux<MigrationObject> getAllMigrationObjects(UUID configId, Long id){

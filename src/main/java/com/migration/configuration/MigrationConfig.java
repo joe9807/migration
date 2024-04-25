@@ -1,5 +1,6 @@
 package com.migration.configuration;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.migration.context.FakeContext;
 import com.migration.context.FileSystemContext;
 import com.migration.context.GenericContext;
@@ -12,7 +13,10 @@ import java.util.UUID;
 @Data
 @Builder
 public class MigrationConfig {
+    @JsonIgnore
     private UUID id;
+
+    private MigrationType type;
     private GenericContext sourceContext;
     private GenericContext targetContext;
 
@@ -27,6 +31,7 @@ public class MigrationConfig {
 
     private static MigrationConfig getFakeToFakeExample(){
         return MigrationConfig.builder()
+                .type(MigrationType.FakeToFake)
                 .sourceContext(FakeContext.getFakeContextExample())
                 .targetContext(FakeContext.builder().build())
                 .build();
@@ -36,6 +41,7 @@ public class MigrationConfig {
         String path = "D:\\DIFFERENT\\firefox\\";
 
         return MigrationConfig.builder()
+                .type(MigrationType.FSToFake)
                 .sourceContext(FileSystemContext.builder().path(path).build())
                 .targetContext(FakeContext.builder().build())
                 .build();
@@ -45,6 +51,7 @@ public class MigrationConfig {
         String path = "E:\\DIFFERENT\\firefox\\";
 
         return MigrationConfig.builder()
+                .type(MigrationType.FakeToFS)
                 .sourceContext(FakeContext.getFakeContextExample())
                 .targetContext(FileSystemContext.builder().path(path).build())
                 .build();
@@ -55,6 +62,7 @@ public class MigrationConfig {
         String targetContext = "E:\\DIFFERENT\\firefox\\";
 
         return MigrationConfig.builder()
+                .type(MigrationType.FSToFS)
                 .sourceContext(FileSystemContext.builder().path(sourcePath).build())
                 .targetContext(FileSystemContext.builder().path(targetContext).build())
                 .build();
