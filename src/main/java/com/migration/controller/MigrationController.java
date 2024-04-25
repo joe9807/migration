@@ -4,6 +4,8 @@ import com.migration.configuration.MigrationConfig;
 import com.migration.service.MigrationService;
 import com.migration.utils.Utils;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -25,8 +27,9 @@ public class MigrationController {
 
     @GetMapping("/config")
     @Operation(summary = "Получить пример конфига миграции")
-    public MigrationConfig getConfig(){
-        return MigrationConfig.getConfigExample();
+    @Parameter(name = "configType", description = "configType", schema = @Schema(type = "string", allowableValues = {"FakeToFake", "FakeToFS", "FSToFake", "FSToFS"}))
+    public MigrationConfig getConfig(String configType){
+        return MigrationConfig.getConfigExample(configType);
     }
 
     @PostMapping(value = "/startFutures", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

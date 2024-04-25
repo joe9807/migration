@@ -1,7 +1,7 @@
 package com.migration.worker;
 
 import com.migration.entity.MigrationObject;
-import com.migration.entity.MigrationObjectStatus;
+import com.migration.enums.MigrationObjectStatus;
 import com.migration.mapper.MigrationMapper;
 import com.migration.object.GenericObject;
 import com.migration.repository.MigrationRepository;

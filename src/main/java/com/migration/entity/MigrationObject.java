@@ -2,6 +2,7 @@ package com.migration.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.migration.context.GenericContext;
+import com.migration.enums.MigrationObjectStatus;
 import com.migration.object.GenericObject;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

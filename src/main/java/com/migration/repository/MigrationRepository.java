@@ -1,7 +1,7 @@
 package com.migration.repository;
 
 import com.migration.entity.MigrationObject;
-import com.migration.entity.MigrationObjectStatus;
+import com.migration.enums.MigrationObjectStatus;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
