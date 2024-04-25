@@ -5,6 +5,9 @@ import com.migration.object.GenericObject;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -55,6 +58,7 @@ public class FakeContext extends GenericContext {
             result+=(degree+degree*contentCount);
         }
 
-        return "FakeContext "+ result + " elements";
+        DecimalFormat df = new DecimalFormat("###,###,###,###,###");
+        return "FakeContext "+ df.format(result) + " elements";
     }
 }

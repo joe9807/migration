@@ -49,7 +49,6 @@ public class MigrationObject {
 
     @JsonIgnore
     public GenericObject getTargetObject(){
-        GenericObject targetObject = targetContext.getObject(targetId, targetPath, type);
-        return targetObject;
+        return targetContext.getObject(targetId, targetPath, type);
     }
 }
