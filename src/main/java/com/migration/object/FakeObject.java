@@ -77,9 +77,9 @@ public class FakeObject extends GenericObject{
     @Override
     public String getName() {
         if (type == MigrationObjectType.CONTAINER) {
-            return String.format("level - %s; container - %s", levelNumber, containerNumber);
+            return String.format("level %s container %s", levelNumber, containerNumber);
         } else {
-            return String.format("level - %s; content - %s.txt", levelNumber, contentNumber);
+            return String.format("level %s content %s.txt", levelNumber, contentNumber);
         }
     }
 }
