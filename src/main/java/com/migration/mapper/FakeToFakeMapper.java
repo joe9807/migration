@@ -1,5 +1,6 @@
 package com.migration.mapper;
 
+import com.migration.enums.MigrationType;
 import com.migration.object.FakeObject;
 import com.migration.object.GenericObject;
 import org.mapstruct.Mapper;
@@ -15,5 +16,9 @@ public interface FakeToFakeMapper extends MigrationMapper {
 
     default void map(@MappingTarget GenericObject target, GenericObject source){
          map((FakeObject) target, (FakeObject) source);
+    }
+
+    default MigrationType getMapperKey(){
+        return MigrationType.FakeToFake;
     }
 }

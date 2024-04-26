@@ -1,7 +1,9 @@
 package com.migration.controller;
 
 import com.migration.configuration.MigrationConfig;
+import com.migration.executor.MigrationExecutor;
 import com.migration.service.MigrationService;
+import com.migration.service.MigrationServiceShort;
 import com.migration.utils.Utils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,6 +28,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class MigrationController {
     private final MigrationService migrationService;
+    private final MigrationServiceShort migrationServiceShort;
+    private final MigrationExecutor migrationExecutor;
 
     @GetMapping("/config")
     @Operation(summary = "Получить пример конфига миграции")
@@ -38,7 +42,7 @@ public class MigrationController {
     @Operation(summary = "Старт миграции по конфигу")
     public Flux<String> startMigration(@RequestBody MigrationConfig config){
         Date date = new Date();
-        return Mono.fromFuture(migrationService.handle(config.getSourceContext().getInitObject()).thenApply(list->{
+        return Mono.fromFuture(migrationServiceShort.handle(config.getSourceContext().getInitObject()).thenApply(list->{
             log.info("ForkJoinPool {}", ForkJoinPool.commonPool());
             log.info("Migration took {}", Utils.getTimeElapsed(new Date().getTime() - date.getTime()));
             return list;
@@ -49,7 +53,7 @@ public class MigrationController {
     @Operation(summary = "Старт миграции по конфигу")
     public Flux<String> startFluxMigration(@RequestBody MigrationConfig config){
         Date date = new Date();
-        return migrationService.handleFlux(config.getSourceContext().getInitObject()).doOnComplete(()->{
+        return migrationServiceShort.handleFlux(config.getSourceContext().getInitObject()).doOnComplete(()->{
             log.info("ForkJoinPool {}", ForkJoinPool.commonPool());
             log.info("Migration took {}", Utils.getTimeElapsed(new Date().getTime() - date.getTime()));
         });
@@ -75,7 +79,7 @@ public class MigrationController {
         CompletableFuture.runAsync(() -> {
             Date date = new Date();
             log.info(result);
-            migrationService.handleExecutor(config, resume.get());
+            migrationExecutor.start(config, resume.get());
             log.info("Time elapsed {}", Utils.getTimeElapsed(new Date().getTime()-date.getTime()));
         }).exceptionally(e->{
             log.error("Error during migration: ", e);
