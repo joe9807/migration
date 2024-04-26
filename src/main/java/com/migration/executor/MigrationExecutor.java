@@ -45,6 +45,8 @@ public class MigrationExecutor {
         }
 
         run(config);
+
+        migrationCache.finish(config);
     }
 
     public void run(MigrationConfig config){

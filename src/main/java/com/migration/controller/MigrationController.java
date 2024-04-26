@@ -31,7 +31,7 @@ public class MigrationController {
     private final MigrationServiceShort migrationServiceShort;
     private final MigrationExecutor migrationExecutor;
 
-    @GetMapping("/config")
+    @GetMapping("/generate")
     @Operation(summary = "Получить пример конфига миграции")
     @Parameter(name = "configType", description = "configType", schema = @Schema(type = "string", allowableValues = {"FakeToFake", "FakeToFS", "FSToFake", "FSToFS"}))
     public MigrationConfig getConfig(String configType){
@@ -92,11 +92,17 @@ public class MigrationController {
     @GetMapping(value = "/monitor")
     @Operation(summary = "Мониторинг процесса миграции")
     public Flux<ServerSentEvent<String>> getMigrationObjects(UUID configId, Long id){
-        log.info("Fetch MigrationObjects for configId '{}' starting with '{}' id", configId, id);
         return migrationService.getAllMigrationObjects(configId, id).map(object-> ServerSentEvent.<String>builder()
                 .id(String.valueOf(object.getId()))
                 .event("message")
                 .data(object.getSourcePath())
                 .build());
+    }
+
+    @CrossOrigin
+    @GetMapping(value = "/config")
+    @Operation(summary = "Получение конфигурации по configId")
+    public MigrationConfig getMigrationConfig(UUID configId){
+        return migrationService.getMigrationConfig(configId);
     }
 }

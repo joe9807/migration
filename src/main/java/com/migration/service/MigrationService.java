@@ -61,4 +61,8 @@ public class MigrationService {
         migrationObject.setStatus(MigrationObjectStatus.DONE);
         migrationRepository.save(migrationObject).toFuture().join();
     }
+
+    public MigrationConfig getMigrationConfig(UUID configId){
+        return migrationCache.getConfig(configId);
+    }
 }

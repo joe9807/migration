@@ -19,11 +19,11 @@ import java.util.stream.Collectors;
 public class MigrationCache {
     private final List<MigrationMapper> mappers;
     private final MigrationRepository migrationRepository;
-    private Map<MigrationConfig, List<MigrationObject>> cacheObjects;
+    private final Map<MigrationConfig, List<MigrationObject>> cacheObjects = new HashMap<>();
+
     private Map<MigrationType, MigrationMapper> cacheMappers;
 
     public void init(){
-        cacheObjects = new HashMap<>();
         cacheMappers = mappers.stream().collect(Collectors.toMap(MigrationMapper::getMapperKey, Function.identity()));
     }
 
