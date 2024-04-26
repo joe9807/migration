@@ -1,5 +1,7 @@
 package com.migration.service;
 
+import com.migration.cache.MigrationCache;
+import com.migration.configuration.AppConfig;
 import com.migration.configuration.MigrationConfig;
 import com.migration.entity.MigrationObject;
 import com.migration.enums.MigrationObjectStatus;
@@ -27,6 +29,8 @@ import java.util.stream.Stream;
 public class MigrationService {
     private final MigrationRepository migrationRepository;
     private final Map<String, MigrationMapper> mappers;
+    private final AppConfig appConfig;
+    private final MigrationCache migrationCache;
 
     public CompletableFuture<Stream<String>> handle(GenericObject object){
         CompletableFuture<Stream<String>> futureObject = CompletableFuture.completedFuture(object).thenApplyAsync(this::getWorkerMethod);
@@ -56,15 +60,17 @@ public class MigrationService {
         return Stream.of(object.getPath());
     }
 
-    public void handleExecutor(MigrationConfig config){
-        migrationRepository.save(MigrationObject.builder()
-                .type(config.getSourceContext().getInitObject().getType())
-                .sourceId(config.getSourceContext().getInitObject().getId())
-                .sourcePath(config.getSourceContext().getInitObject().getPath())
-                .targetPath(config.getTargetContext().getInitObject().getPath())
-                .status(MigrationObjectStatus.NEW)
-                .configId(config.getId())
-                .build()).toFuture().join();
+    public void handleExecutor(MigrationConfig config, boolean resume){
+        if (!resume) {
+            migrationRepository.save(MigrationObject.builder()
+                    .type(config.getSourceContext().getInitObject().getType())
+                    .sourceId(config.getSourceContext().getInitObject().getId())
+                    .sourcePath(config.getSourceContext().getInitObject().getPath())
+                    .targetPath(config.getTargetContext().getInitObject().getPath())
+                    .status(MigrationObjectStatus.NEW)
+                    .configId(config.getId())
+                    .build()).toFuture().join();
+        }
         run(config);
     }
 
@@ -79,7 +85,7 @@ public class MigrationService {
             }
 
             if (!isActive(migrationExecutor, executedTasks)) {
-                List<MigrationObject> objects = getNewMigrationObjects(config);
+                List<MigrationObject> objects = migrationCache.getNewMigrationObjects(config);
                 if (objects.size() == 0) break;
             }
         } while (true);
@@ -90,13 +96,10 @@ public class MigrationService {
         return migrationExecutor.getActiveCount() != 0 || !migrationExecutor.getQueue().isEmpty() || migrationExecutor.getCompletedTaskCount() != executedTasks;
     }
 
-    private List<MigrationObject> getNewMigrationObjects(MigrationConfig config){
-        return migrationRepository.findByStatusAndConfigIdWithLimit(MigrationObjectStatus.NEW, config.getId()).collectList().toFuture().join();
-    }
-
     private long executeTasks(ThreadPoolExecutor migrationExecutor, MigrationConfig config, MigrationMapper mapper) {
-        List<MigrationWorker> workers = getNewMigrationObjects(config)
+        List<MigrationWorker> workers = migrationCache.getNewMigrationObjects(config)
                 .stream()
+                .limit(appConfig.getObjectsLimit())
                 .peek(migrationObject -> {
                     migrationObject.setSourceContext(config.getSourceContext());
                     migrationObject.setTargetContext(config.getTargetContext());
@@ -112,6 +115,7 @@ public class MigrationService {
                 .collect(Collectors.toList())
                 , MigrationObjectStatus.CAPTURED).toFuture().join();
 
+        migrationCache.evict(config, workers.stream().map(MigrationWorker::getMigrationObject).toList());
         workers.forEach(migrationExecutor::execute);
         return workers.size();
     }

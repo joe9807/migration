@@ -6,10 +6,7 @@ import com.migration.enums.MigrationObjectStatus;
 import com.migration.enums.MigrationObjectType;
 import com.migration.object.GenericObject;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Table;
@@ -22,6 +19,7 @@ import java.util.UUID;
 @Table(name="objects")
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(of = {"id"})
 public class MigrationObject {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

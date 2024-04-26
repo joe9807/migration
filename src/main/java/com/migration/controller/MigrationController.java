@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
 @Slf4j
@@ -56,24 +57,31 @@ public class MigrationController {
 
     @PostMapping(value = "/startExecutor")
     @Operation(summary = "Старт миграции via Executor")
-    @Parameter(name = "singleMigration", description = "Очистить предыдущие миграции", schema = @Schema(type = "boolean", defaultValue = "false"))
-    public String startExecutorMigration(@RequestBody MigrationConfig config, boolean singleMigration){
-        if (singleMigration) {
+    @Parameter(name = "clearAll", description = "Очистить Все предыдущие миграции", schema = @Schema(type = "boolean", defaultValue = "false"))
+    public String startExecutorMigration(@RequestBody MigrationConfig config, boolean clearAll){
+        if (clearAll && config.getId() == null) {
             log.info("Clear previous migrations!");
             migrationService.deleteAll();
         }
 
-        config.setId(UUID.randomUUID());
+        AtomicBoolean resume = new AtomicBoolean(false);
+        if (config.getId() != null) {
+            resume.set(true);
+        } else {
+            config.setId(UUID.randomUUID());
+        }
+
+        String result = String.format("%s migration %s with id: %s; %s; %s", resume.get()?"Resumed":"Started", LocalDateTime.now(), config.getId(), config.getSourceContext(), config.getTargetContext());
         CompletableFuture.runAsync(() -> {
             Date date = new Date();
-            log.info("Started migration with id: {}; {}; {}", config.getId(), config.getSourceContext(), config.getTargetContext());
-            migrationService.handleExecutor(config);
+            log.info(result);
+            migrationService.handleExecutor(config, resume.get());
             log.info("Time elapsed {}", Utils.getTimeElapsed(new Date().getTime()-date.getTime()));
         }).exceptionally(e->{
             log.error("Error during migration: ", e);
             return CompletableFuture.allOf().join();
         });
-        return String.format("Migration started at %s with id %s", LocalDateTime.now(), config.getId());
+        return result;
     }
 
     @CrossOrigin

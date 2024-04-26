@@ -1,21 +1,20 @@
 package com.migration.configuration;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.migration.context.FakeContext;
 import com.migration.context.FileSystemContext;
 import com.migration.context.GenericContext;
 import com.migration.enums.MigrationType;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.UUID;
 
 @Data
 @Builder
+@EqualsAndHashCode(of = {"id"})
 public class MigrationConfig {
-    @JsonIgnore
     private UUID id;
-
     private MigrationType type;
     private GenericContext sourceContext;
     private GenericContext targetContext;

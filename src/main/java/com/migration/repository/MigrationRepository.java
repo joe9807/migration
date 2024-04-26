@@ -13,17 +13,17 @@ import java.util.List;
 import java.util.UUID;
 
 public interface MigrationRepository extends R2dbcRepository<MigrationObject, Long> {
-    @Query("select * from objects where config_id = :configId and id > :id order by id ")
+    @Query("select * from objects where config_id = :configId and id > :id order by id limit 100000")
     Flux<MigrationObject> findByConfigIdOrderByIdAsc(UUID configId, Long id);
 
-    @Query("select * from objects where status = :status and config_id = :configId limit 50")
+    @Query("select * from objects where status = :status and config_id = :configId limit 100000")
     Flux<MigrationObject> findByStatusAndConfigIdWithLimit(MigrationObjectStatus status, UUID configId);
 
+    @Transactional
     default Mono<Void> capture(List<Long> ids, MigrationObjectStatus status){
         return ids.size() == 0? Mono.empty():update(ids, status);
     }
 
-    @Transactional
     @Modifying
     @Query("UPDATE objects set status = :status where id IN (:ids)")
     Mono<Void> update(List<Long> ids, MigrationObjectStatus status);
