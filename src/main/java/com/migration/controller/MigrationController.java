@@ -75,7 +75,10 @@ public class MigrationController {
             config.setId(UUID.randomUUID());
         }
 
-        String result = String.format("%s migration %s with id: %s; %s; %s", resume.get()?"Resumed":"Started", LocalDateTime.now(), config.getId(), config.getSourceContext(), config.getTargetContext());
+        String url = String.format("http://localhost:5173/?configId=%s", config.getId());
+        String result = String.format("%s migration %s with id: %s; %s; %s\n%s", resume.get()?"Resumed":"Started", LocalDateTime.now(), config.getId()
+                , config.getSourceContext(), config.getTargetContext(), url);
+
         CompletableFuture.runAsync(() -> {
             Date date = new Date();
             log.info(result);

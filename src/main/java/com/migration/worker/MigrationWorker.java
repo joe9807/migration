@@ -1,6 +1,7 @@
 package com.migration.worker;
 
 import com.migration.entity.MigrationObject;
+import com.migration.enums.MigrationObjectStatus;
 import com.migration.object.GenericObject;
 import com.migration.service.MigrationService;
 import lombok.Data;
@@ -29,11 +30,14 @@ public class MigrationWorker implements Runnable {
             }
 
             if (target.getId() != null) {
+                migrationObject.setTargetId(target.getId());
                 migrationService.saveChildren(migrationObject, source, target);
             }
         } catch (Exception e){
             log.error("MigrationWorker error for object "+ migrationObject.getSourcePath(), e);
             migrationService.failObject(migrationObject);
+        } finally {
+            System.out.println(migrationService.complete(migrationObject, MigrationObjectStatus.DONE));
         }
     }
 }

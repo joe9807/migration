@@ -13,8 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 @Component
@@ -34,7 +32,7 @@ public class MigrationExecutor {
         }
 
         if (!resume) {
-            migrationRepository.save(MigrationObject.builder()
+            MigrationObject rootObject = migrationRepository.save(MigrationObject.builder()
                     .type(config.getSourceContext().getInitObject().getType())
                     .sourceId(config.getSourceContext().getInitObject().getId())
                     .sourcePath(config.getSourceContext().getInitObject().getPath())
@@ -42,6 +40,8 @@ public class MigrationExecutor {
                     .status(MigrationObjectStatus.NEW)
                     .configId(config.getId())
                     .build()).toFuture().join();
+
+            migrationCache.step(null, rootObject.getStatus(), 1, rootObject.getSourcePath());
         }
 
         run(config);
@@ -50,27 +50,25 @@ public class MigrationExecutor {
     }
 
     public void run(MigrationConfig config){
-        ThreadPoolExecutor migrationExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
-
         long executedTasks = 0L;
         do {
-            if (migrationExecutor.getQueue().isEmpty()) {
-                executedTasks += executeTasks(migrationExecutor, config);
+            if (migrationCache.getExecutor().getQueue().size()<100) {
+                executedTasks += executeTasks(config);
             }
 
-            if (!isActive(migrationExecutor, executedTasks)) {
+            if (!isActive(executedTasks)) {
                 List<MigrationObject> objects = migrationCache.getNewMigrationObjects(config);
                 if (objects.size() == 0) break;
             }
         } while (true);
-        log.info("migrationExecutor: {}; executedTasks: {}", migrationExecutor, executedTasks);
+        log.info("migrationExecutor: {}; executedTasks: {}", migrationCache.getExecutor(), executedTasks);
     }
 
-    private boolean isActive(ThreadPoolExecutor migrationExecutor, long executedTasks){
-        return migrationExecutor.getActiveCount() != 0 || !migrationExecutor.getQueue().isEmpty() || migrationExecutor.getCompletedTaskCount() != executedTasks;
+    private boolean isActive(long executedTasks){
+        return migrationCache.getExecutor().getActiveCount() != 0 || !migrationCache.getExecutor().getQueue().isEmpty() || migrationCache.getExecutor().getCompletedTaskCount() != executedTasks;
     }
 
-    private long executeTasks(ThreadPoolExecutor migrationExecutor, MigrationConfig config) {
+    private long executeTasks(MigrationConfig config) {
         List<MigrationWorker> workers = migrationCache.getNewMigrationObjects(config)
                 .stream()
                 .limit(appConfig.getObjectsLimit())
@@ -86,7 +84,7 @@ public class MigrationExecutor {
                 , MigrationObjectStatus.CAPTURED).toFuture().join();
 
         migrationCache.evict(config, workers.stream().map(MigrationWorker::getMigrationObject).toList());
-        workers.forEach(migrationExecutor::execute);
+        workers.forEach(migrationCache.getExecutor()::execute);
         return workers.size();
     }
 }

@@ -1,5 +1,5 @@
 package com.migration.enums;
 
 public enum MigrationObjectStatus {
-    NEW, CAPTURED, FAILED, DONE
+    NEW, CAPTURED, WARNING, FAILED, DONE
 }

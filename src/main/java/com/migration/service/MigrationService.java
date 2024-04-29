@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -49,20 +50,29 @@ public class MigrationService {
     }
 
     public void saveChildren(MigrationObject migrationObject, GenericObject source, GenericObject target){
-        migrationRepository.saveAll(source.getChildren()
-                .stream()
+        List<GenericObject> children = source.getChildren();
+        saveAll(children.stream()
                 .map(child -> MigrationObject.builder().sourceId(child.getId()).sourcePath(child.getPath()).status(MigrationObjectStatus.NEW)
                         .targetPath(target.getPath()+"/"+child.getName())
                         .type(child.getType())
                         .configId(migrationObject.getConfigId()).build())
-                .collect(Collectors.toList())).subscribe();
+                .collect(Collectors.toList()));
 
-        migrationObject.setTargetId(target.getId());
-        migrationObject.setStatus(MigrationObjectStatus.DONE);
-        migrationRepository.save(migrationObject).toFuture().join();
+        migrationCache.step(null, MigrationObjectStatus.NEW, children.size(), null);
+    }
+
+    private void saveAll(List<MigrationObject> objects){
+        migrationRepository.saveAll(objects).collectList().toFuture().join();
     }
 
     public MigrationConfig getMigrationConfig(UUID configId){
         return migrationCache.getConfig(configId);
+    }
+
+    public String complete(MigrationObject migrationObject, MigrationObjectStatus to){
+        MigrationObjectStatus from = migrationObject.getStatus();
+        migrationObject.setStatus(to);
+        migrationRepository.save(migrationObject).toFuture().join();
+        return migrationCache.step(from, to, 1, migrationObject.getSourcePath());
     }
 }
