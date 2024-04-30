@@ -37,7 +37,7 @@ public class MigrationWorker implements Runnable {
             log.error("MigrationWorker error for object "+ migrationObject.getSourcePath(), e);
             migrationService.failObject(migrationObject);
         } finally {
-            System.out.println(migrationService.complete(migrationObject, MigrationObjectStatus.DONE));
+            migrationService.complete(migrationObject, MigrationObjectStatus.DONE);
         }
     }
 }

@@ -34,7 +34,9 @@ public class MigrationStatistics {
                 case DONE -> done+=value;
             }
 
-            this.sourcePath = sourcePath;
+            if (sourcePath != null) {
+                this.sourcePath = sourcePath;
+            }
         }
     }
 

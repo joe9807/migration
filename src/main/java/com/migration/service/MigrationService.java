@@ -7,6 +7,7 @@ import com.migration.enums.MigrationObjectStatus;
 import com.migration.mapper.MigrationMapper;
 import com.migration.object.GenericObject;
 import com.migration.repository.MigrationRepository;
+import com.migration.websocket.WebSocketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 public class MigrationService {
     private final MigrationRepository migrationRepository;
     private final MigrationCache migrationCache;
+    private final WebSocketService webSocketService;
 
     public Flux<MigrationObject> getAllMigrationObjects(UUID configId, Long id){
         return migrationRepository.findByConfigIdOrderByIdAsc(configId, id);
@@ -69,10 +71,13 @@ public class MigrationService {
         return migrationCache.getConfig(configId);
     }
 
-    public String complete(MigrationObject migrationObject, MigrationObjectStatus to){
+    public void complete(MigrationObject migrationObject, MigrationObjectStatus to){
         MigrationObjectStatus from = migrationObject.getStatus();
         migrationObject.setStatus(to);
         migrationRepository.save(migrationObject).toFuture().join();
-        return migrationCache.step(from, to, 1, migrationObject.getSourcePath());
+        String result = migrationCache.step(from, to, 1, migrationObject.getSourcePath());
+        System.out.println(result);
+        webSocketService.sendMessageToClient(result);
+        webSocketService.sendMessageToClient(migrationCache.getStatistics());
     }
 }

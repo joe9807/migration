@@ -84,6 +84,7 @@ public class MigrationExecutor {
                 , MigrationObjectStatus.CAPTURED).toFuture().join();
 
         migrationCache.evict(config, workers.stream().map(MigrationWorker::getMigrationObject).toList());
+        migrationCache.step(MigrationObjectStatus.NEW, MigrationObjectStatus.CAPTURED, workers.size(), null);
         workers.forEach(migrationCache.getExecutor()::execute);
         return workers.size();
     }
