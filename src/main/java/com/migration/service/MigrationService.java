@@ -78,6 +78,12 @@ public class MigrationService {
         String result = migrationCache.step(from, to, 1, migrationObject.getSourcePath());
         log.info(result);
         webSocketService.sendMessageToClient(result);
-        webSocketService.sendMessageToClient(migrationCache.getStatistics());
+    }
+
+    public void sendStatistics(){
+        if (migrationCache.getStatistics().isChanged()) {
+            webSocketService.sendMessageToClient(migrationCache.getStatistics());
+            migrationCache.getStatistics().setChanged(false);
+        }
     }
 }

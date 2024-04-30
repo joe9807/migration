@@ -12,6 +12,7 @@ public class MigrationStatistics {
     private int done;
     private int total;
     private String sourcePath;
+    private boolean changed;
 
     public void step(MigrationObjectStatus from, MigrationObjectStatus to, int value, String sourcePath){
         if (from == null) {
@@ -38,6 +39,8 @@ public class MigrationStatistics {
                 this.sourcePath = sourcePath;
             }
         }
+
+        changed = true;
     }
 
     public int getProcessed(){

@@ -46,6 +46,7 @@ public class MigrationExecutor {
 
         run(config);
 
+        migrationService.sendStatistics();
         migrationCache.finish(config);
     }
 
@@ -60,6 +61,7 @@ public class MigrationExecutor {
                 List<MigrationObject> objects = migrationCache.getNewMigrationObjects(config);
                 if (objects.size() == 0) break;
             }
+            migrationService.sendStatistics();
         } while (true);
         log.info("migrationExecutor: {}; executedTasks: {}", migrationCache.getExecutor(), executedTasks);
     }
