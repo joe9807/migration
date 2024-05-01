@@ -12,8 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Function;
@@ -30,11 +32,9 @@ public class MigrationCache {
     private MigrationStatistics statistics;
     private Map<MigrationType, MigrationMapper> cacheMappers;
     private ThreadPoolExecutor executor;
-    private SimpleDateFormat format;
 
     public void init(){
         statistics = new MigrationStatistics();
-        format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         cacheMappers = mappers.stream().collect(Collectors.toMap(MigrationMapper::getMapperKey, Function.identity()));
     }
 
@@ -69,13 +69,6 @@ public class MigrationCache {
     }
 
     public synchronized String step(MigrationObjectStatus from, MigrationObjectStatus to, int value, String sourcePath){
-        statistics.step(from, to, value, sourcePath);
-
-        return String.format("%-20s :: %-25s :: %6s :: %-15s :: %s"
-                , format.format(new Date())
-                , Thread.currentThread().getName()
-                , executor != null?(executor.getActiveCount() + "(" + executor.getQueue().size() + ")"):""
-                , statistics.getProcessed() + "/" + statistics.getTotal(),
-                statistics.getSourcePath());
+        return statistics.step(from, to, value, executor != null?(executor.getActiveCount() + "(" + executor.getQueue().size() + ")"):"", sourcePath);
     }
 }

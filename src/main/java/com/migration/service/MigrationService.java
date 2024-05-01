@@ -75,9 +75,7 @@ public class MigrationService {
         MigrationObjectStatus from = migrationObject.getStatus();
         migrationObject.setStatus(to);
         migrationRepository.save(migrationObject).toFuture().join();
-        String result = migrationCache.step(from, to, 1, migrationObject.getSourcePath());
-        log.info(result);
-        webSocketService.sendMessageToClient(result);
+        log.info(migrationCache.step(from, to, 1, migrationObject.getSourcePath()));
     }
 
     public void sendStatistics(){

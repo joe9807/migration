@@ -11,10 +11,6 @@ public class WebSocketService {
     private final SimpMessagingTemplate messagingTemplate;
 
     public void sendMessageToClient(MigrationStatistics statistics) {
-        messagingTemplate.convertAndSend("/topic/progress", statistics);
-    }
-
-    public void sendMessageToClient(String statistics) {
-        messagingTemplate.convertAndSend("/topic/logs", statistics);
+        messagingTemplate.convertAndSend("/topic/statistics", statistics);
     }
 }
