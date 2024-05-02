@@ -5,7 +5,6 @@ import com.migration.configuration.AppConfig;
 import com.migration.configuration.MigrationConfig;
 import com.migration.entity.MigrationObject;
 import com.migration.enums.MigrationObjectStatus;
-import com.migration.repository.MigrationRepository;
 import com.migration.service.MigrationService;
 import com.migration.worker.MigrationWorker;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class MigrationExecutor {
-    private final MigrationRepository migrationRepository;
     private final AppConfig appConfig;
     private final MigrationCache migrationCache;
     private final MigrationService migrationService;
@@ -32,15 +30,7 @@ public class MigrationExecutor {
         }
 
         if (!resume) {
-            MigrationObject rootObject = migrationRepository.save(MigrationObject.builder()
-                    .type(config.getSourceContext().getInitObject().getType())
-                    .sourceId(config.getSourceContext().getInitObject().getId())
-                    .sourcePath(config.getSourceContext().getInitObject().getPath())
-                    .targetPath(config.getTargetContext().getInitObject().getPath())
-                    .status(MigrationObjectStatus.NEW)
-                    .configId(config.getId())
-                    .build()).toFuture().join();
-
+            MigrationObject rootObject = migrationService.createRootObject(config);
             migrationCache.step(null, rootObject.getStatus(), 1, rootObject.getSourcePath());
         }
 
@@ -77,13 +67,12 @@ public class MigrationExecutor {
                 .map(object-> new MigrationWorker(object, migrationService))
                 .toList();
 
-        migrationRepository.capture(workers
-                        .stream()
-                        .map(MigrationWorker::getMigrationObject)
-                        .peek(object->object.setStatus(MigrationObjectStatus.CAPTURED))
-                        .map(MigrationObject::getId)
-                        .collect(Collectors.toList())
-                , MigrationObjectStatus.CAPTURED).toFuture().join();
+        migrationService.capture(workers
+                .stream()
+                .map(MigrationWorker::getMigrationObject)
+                .peek(object->object.setStatus(MigrationObjectStatus.CAPTURED))
+                .map(MigrationObject::getId)
+                .collect(Collectors.toList()));
 
         migrationCache.evict(config, workers.stream().map(MigrationWorker::getMigrationObject).toList());
         migrationCache.step(MigrationObjectStatus.NEW, MigrationObjectStatus.CAPTURED, workers.size(), null);

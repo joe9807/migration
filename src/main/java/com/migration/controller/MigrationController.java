@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@CrossOrigin
 public class MigrationController {
     private final MigrationService migrationService;
     private final MigrationServiceShort migrationServiceShort;
@@ -91,7 +92,6 @@ public class MigrationController {
         return result;
     }
 
-    @CrossOrigin
     @GetMapping(value = "/monitor")
     @Operation(summary = "Мониторинг процесса миграции")
     public Flux<ServerSentEvent<String>> getMigrationObjects(UUID configId, Long id){
@@ -102,7 +102,6 @@ public class MigrationController {
                 .build());
     }
 
-    @CrossOrigin
     @GetMapping(value = "/config")
     @Operation(summary = "Получение конфигурации по configId")
     public MigrationConfig getMigrationConfig(UUID configId){

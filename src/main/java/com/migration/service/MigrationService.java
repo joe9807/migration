@@ -84,4 +84,19 @@ public class MigrationService {
             migrationCache.getStatistics().setChanged(false);
         }
     }
+
+    public MigrationObject createRootObject(MigrationConfig config){
+        return migrationRepository.save(MigrationObject.builder()
+                .type(config.getSourceContext().getInitObject().getType())
+                .sourceId(config.getSourceContext().getInitObject().getId())
+                .sourcePath(config.getSourceContext().getInitObject().getPath())
+                .targetPath(config.getTargetContext().getInitObject().getPath())
+                .status(MigrationObjectStatus.NEW)
+                .configId(config.getId())
+                .build()).toFuture().join();
+    }
+
+    public void capture(List<Long> ids){
+        migrationRepository.capture(ids, MigrationObjectStatus.CAPTURED).toFuture().join();
+    }
 }
