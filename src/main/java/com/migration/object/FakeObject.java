@@ -31,20 +31,12 @@ public class FakeObject extends GenericObject{
 
     @Override
     public List<GenericObject> getChildren() {
-        if (type == MigrationObjectType.CONTENT) return new ArrayList<>();
-
         List<GenericObject> children = new ArrayList<>();
 
-        if (levelNumber == context.getLevelsCount()) {
-            children.addAll(IntStream.range(0, context.getContentCount())
-                    .mapToObj(contentNumber-> {
-                        FakeObject child = FakeObject.builder().contentNumber(contentNumber).levelNumber(levelNumber+1).build();
-                        child.setType(MigrationObjectType.CONTENT);
-                        child.setPath(path+"/"+child.getName());
-                        return child;
-                    })
-                    .toList());
+        if (type == MigrationObjectType.CONTENT) return children;
 
+        if (levelNumber == context.getLevelsCount()) {
+            children.addAll(getContentChildren());
             return children;
         }
 
@@ -57,16 +49,19 @@ public class FakeObject extends GenericObject{
                 })
                 .toList());
 
-        children.addAll(IntStream.range(0, context.getContentCount())
+        children.addAll(getContentChildren());
+        return children;
+    }
+
+    private List<FakeObject> getContentChildren(){
+        return IntStream.range(0, context.getContentCount())
                 .mapToObj(contentNumber-> {
                     FakeObject child = FakeObject.builder().contentNumber(contentNumber).levelNumber(levelNumber+1).build();
                     child.setType(MigrationObjectType.CONTENT);
                     child.setPath(path+"/"+child.getName());
                     return child;
                 })
-                .toList());
-
-        return children;
+                .toList();
     }
 
     @Override
