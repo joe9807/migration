@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -23,7 +23,7 @@ public class MigrationExecutor {
     private final MigrationService migrationService;
 
     public void start(MigrationConfig config, boolean resume){
-        migrationCache.init();
+        migrationCache.init(config);
 
         if (migrationCache.getMigrationMapper(config.getType()) == null){
             throw new RuntimeException("There is no corresponding mapper for "+config.getType()+" MigrationType. Please implement this mapper!");
@@ -36,47 +36,37 @@ public class MigrationExecutor {
 
         run(config);
 
-        migrationService.sendStatistics();
         migrationCache.finish(config);
     }
 
     public void run(MigrationConfig config){
         long executedTasks = 0L;
+        long completedTasks;
+
         do {
+            completedTasks = migrationCache.getExecutor().getCompletedTaskCount();
             if (migrationCache.getExecutor().getQueue().size()<100) {
                 executedTasks += executeTasks(config);
             }
 
-            if (!isActive(executedTasks)) {
-                List<MigrationObject> objects = migrationCache.getNewMigrationObjects(config);
-                if (objects.size() == 0) break;
-            }
             migrationService.sendStatistics();
-        } while (true);
+        } while (completedTasks != executedTasks);
+
+        migrationService.sendStatistics();
         log.info("migrationExecutor: {}; executedTasks: {}", migrationCache.getExecutor(), executedTasks);
     }
 
-    private boolean isActive(long executedTasks){
-        return migrationCache.getExecutor().getActiveCount() != 0 || !migrationCache.getExecutor().getQueue().isEmpty() || migrationCache.getExecutor().getCompletedTaskCount() != executedTasks;
-    }
-
     private long executeTasks(MigrationConfig config) {
-        List<MigrationWorker> workers = migrationCache.getNewMigrationObjects(config)
-                .stream()
-                .limit(appConfig.getObjectsLimit())
-                .map(object-> new MigrationWorker(object, migrationService))
-                .toList();
+        Set<MigrationObject> objects = migrationCache.getNewMigrationObjects(config).stream()
+                .limit(appConfig.getObjectsLimit()).collect(Collectors.toSet());
 
-        migrationService.capture(workers
-                .stream()
-                .map(MigrationWorker::getMigrationObject)
-                .peek(object->object.setStatus(MigrationObjectStatus.CAPTURED))
+        migrationService.capture(objects.stream()
                 .map(MigrationObject::getId)
                 .collect(Collectors.toList()));
 
-        migrationCache.evict(config, workers.stream().map(MigrationWorker::getMigrationObject).toList());
-        migrationCache.step(MigrationObjectStatus.NEW, MigrationObjectStatus.CAPTURED, workers.size(), null);
-        workers.forEach(migrationCache.getExecutor()::execute);
-        return workers.size();
+        migrationCache.evict(config, objects);
+        migrationCache.step(MigrationObjectStatus.NEW, MigrationObjectStatus.CAPTURED, objects.size(), null);
+        objects.forEach(object-> migrationCache.getExecutor().execute(new MigrationWorker(object, migrationService)));
+        return objects.size();
     }
 }

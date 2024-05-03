@@ -16,6 +16,8 @@ public class MigrationWorker implements Runnable {
     public MigrationWorker(MigrationObject migrationObject, MigrationService migrationService){
         this.migrationObject = migrationObject;
         this.migrationService = migrationService;
+
+        migrationObject.setStatus(MigrationObjectStatus.CAPTURED);
     }
 
     @Override

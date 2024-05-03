@@ -6,18 +6,17 @@ import com.migration.entity.MigrationObject;
 import com.migration.enums.MigrationObjectStatus;
 import com.migration.enums.MigrationType;
 import com.migration.mapper.MigrationMapper;
-import com.migration.repository.MigrationRepository;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -25,27 +24,28 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MigrationCache {
     private final List<MigrationMapper> mappers;
-    private final MigrationRepository migrationRepository;
-    private final Map<MigrationConfig, List<MigrationObject>> cacheObjects = new HashMap<>();
+    private final Map<MigrationConfig, Set<MigrationObject>> cacheObjects = new ConcurrentHashMap<>();
 
     @Getter
     private MigrationStatistics statistics;
     private Map<MigrationType, MigrationMapper> cacheMappers;
     private ThreadPoolExecutor executor;
 
-    public void init(){
+    public void init(MigrationConfig config){
         statistics = new MigrationStatistics();
         cacheMappers = mappers.stream().collect(Collectors.toMap(MigrationMapper::getMapperKey, Function.identity()));
+        cacheObjects.put(config, new HashSet<>());
     }
 
-    public List<MigrationObject> getNewMigrationObjects(MigrationConfig config){
-        if (CollectionUtils.isEmpty(cacheObjects.get(config))){
-            cacheObjects.put(config, migrationRepository.findByStatusAndConfigIdWithLimit(MigrationObjectStatus.NEW, config.getId()).collectList().toFuture().join());
-        }
-        return cacheObjects.get(config);
+    public synchronized void populateCache(UUID configId, List<MigrationObject> objects){
+        cacheObjects.get(getConfig(configId)).addAll(objects);
     }
 
-    public void evict(MigrationConfig config, List<MigrationObject> objects){
+    public synchronized Set<MigrationObject> getNewMigrationObjects(MigrationConfig config){
+        return new HashSet<>(cacheObjects.get(config));
+    }
+
+    public synchronized void evict(MigrationConfig config, Set<MigrationObject> objects){
         cacheObjects.get(config).removeAll(objects);
     }
 
@@ -64,8 +64,18 @@ public class MigrationCache {
     }
 
     public ThreadPoolExecutor getExecutor(){
-        if (executor == null ) executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
+        if (executor == null ) executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50, getFactory());
         return executor;
+    }
+
+    private ThreadFactory getFactory(){
+        return new ThreadFactory(){
+            final AtomicInteger count = new AtomicInteger(0);
+
+            public Thread newThread(@NonNull Runnable r) {
+                return new Thread(r, "migration-thread-"+count.getAndIncrement());
+            }
+        };
     }
 
     public synchronized String step(MigrationObjectStatus from, MigrationObjectStatus to, int value, String sourcePath){
