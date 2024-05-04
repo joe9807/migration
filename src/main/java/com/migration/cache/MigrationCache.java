@@ -31,10 +31,12 @@ public class MigrationCache {
     @Getter
     private MigrationStatistics statistics;
     private Map<MigrationType, MigrationMapper> cacheMappers;
+    @Getter
     private ThreadPoolExecutor executor;
 
     public void init(MigrationConfig config){
         statistics = new MigrationStatistics();
+        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50, getFactory());
         cacheMappers = mappers.stream().collect(Collectors.toMap(MigrationMapper::getMapperKey, Function.identity()));
         cacheObjects.put(config, ConcurrentHashMap.newKeySet());
     }
@@ -68,11 +70,6 @@ public class MigrationCache {
         return cacheMappers.get(migrationType);
     }
 
-    public ThreadPoolExecutor getExecutor(){
-        if (executor == null ) executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50, getFactory());
-        return executor;
-    }
-
     private ThreadFactory getFactory(){
         return new ThreadFactory(){
             final AtomicInteger count = new AtomicInteger(0);
@@ -84,6 +81,6 @@ public class MigrationCache {
     }
 
     public String step(MigrationObjectStatus from, MigrationObjectStatus to, int value, String sourcePath, UUID configId){
-        return statistics.step(from, to, value, cacheObjects.get(getConfig(configId)).size(), executor != null?(executor.getActiveCount() + "(" + executor.getQueue().size() + ")"):"", sourcePath);
+        return statistics.step(from, to, value, cacheObjects.get(getConfig(configId)).size(), executor.getActiveCount(), executor.getQueue().size(), sourcePath);
     }
 }

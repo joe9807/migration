@@ -21,7 +21,7 @@ public class MigrationStatistics {
     @JsonIgnore
     private boolean changed;
 
-    public synchronized String step(MigrationObjectStatus from, MigrationObjectStatus to, int value, int cacheSize, String executorValue, String sourcePath) {
+    public synchronized String step(MigrationObjectStatus from, MigrationObjectStatus to, int value, int cacheSize, int executorPoolSize, int executorQueueSize, String sourcePath) {
         if (from == null) {
             total += value;
             created += value;
@@ -50,7 +50,7 @@ public class MigrationStatistics {
                     , DateFormatUtils.format(new Date(), Utils.DATE_FORMAT)
                     , Thread.currentThread().getName()
                     , cacheSize
-                    , executorValue
+                    , executorPoolSize, executorQueueSize
                     , (warnings + failed + done) + "/" + total,
                     sourcePath);
             logs = result;
