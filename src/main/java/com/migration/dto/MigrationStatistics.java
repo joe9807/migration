@@ -51,7 +51,7 @@ public class MigrationStatistics {
                     , Thread.currentThread().getName()
                     , cacheSize
                     , executorPoolSize, executorQueueSize
-                    , (warnings + failed + done) + "/" + total,
+                    , (warnings + failed + done),  total,
                     sourcePath);
             logs = result;
             return result;

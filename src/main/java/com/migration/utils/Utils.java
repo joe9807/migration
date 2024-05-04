@@ -1,7 +1,7 @@
 package com.migration.utils;
 
 public class Utils {
-    public static String LOG_PATTERN = "%-20s :: %-20s :: %-8s :: %3s(%3s) :: %-15s :: %s";
+    public static String LOG_PATTERN = "%-20s :: %-20s :: %-8s :: %3s/%-3s :: %8s/%-8s :: %s";
     public static String DATE_FORMAT = "yyyy-MM-dd HH:mm:SS";
 
     public static String getTimeElapsed(long elapsed) {
