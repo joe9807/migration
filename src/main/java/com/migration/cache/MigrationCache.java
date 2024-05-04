@@ -34,18 +34,18 @@ public class MigrationCache {
     public void init(MigrationConfig config){
         statistics = new MigrationStatistics();
         cacheMappers = mappers.stream().collect(Collectors.toMap(MigrationMapper::getMapperKey, Function.identity()));
-        cacheObjects.put(config, new HashSet<>());
+        cacheObjects.put(config, ConcurrentHashMap.newKeySet());
     }
 
-    public synchronized void populateCache(UUID configId, List<MigrationObject> objects){
+    public void populateCache(UUID configId, List<MigrationObject> objects){
         cacheObjects.get(getConfig(configId)).addAll(objects);
     }
 
-    public synchronized Set<MigrationObject> getNewMigrationObjects(MigrationConfig config){
-        return new HashSet<>(cacheObjects.get(config));
+    public Set<MigrationObject> getNewMigrationObjects(MigrationConfig config){
+        return cacheObjects.get(config);
     }
 
-    public synchronized void evict(MigrationConfig config, Set<MigrationObject> objects){
+    public void evict(MigrationConfig config, Set<MigrationObject> objects){
         cacheObjects.get(config).removeAll(objects);
     }
 
