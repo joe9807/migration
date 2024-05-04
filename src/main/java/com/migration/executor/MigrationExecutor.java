@@ -31,7 +31,7 @@ public class MigrationExecutor {
 
         if (!resume) {
             MigrationObject rootObject = migrationService.createRootObject(config);
-            migrationCache.step(null, rootObject.getStatus(), 1, rootObject.getSourcePath());
+            migrationCache.step(null, rootObject.getStatus(), 1, rootObject.getSourcePath(), config.getId());
         }
 
         run(config);
@@ -65,7 +65,7 @@ public class MigrationExecutor {
                 .collect(Collectors.toList()));
 
         migrationCache.evict(config, objects);
-        migrationCache.step(MigrationObjectStatus.NEW, MigrationObjectStatus.CAPTURED, objects.size(), null);
+        migrationCache.step(MigrationObjectStatus.NEW, MigrationObjectStatus.CAPTURED, objects.size(), null, config.getId());
         objects.forEach(object-> migrationCache.getExecutor().execute(new MigrationWorker(object, migrationService)));
         return objects.size();
     }

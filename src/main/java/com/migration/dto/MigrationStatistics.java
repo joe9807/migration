@@ -1,6 +1,8 @@
 package com.migration.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.migration.enums.MigrationObjectStatus;
+import com.migration.utils.Utils;
 import lombok.Data;
 import org.apache.commons.lang3.time.DateFormatUtils;
 
@@ -15,9 +17,11 @@ public class MigrationStatistics {
     private int done;
     private int total;
     private String logs;
+
+    @JsonIgnore
     private boolean changed;
 
-    public String step(MigrationObjectStatus from, MigrationObjectStatus to, int value, String executorValue, String sourcePath) {
+    public synchronized String step(MigrationObjectStatus from, MigrationObjectStatus to, int value, int cacheSize, String executorValue, String sourcePath) {
         if (from == null) {
             total += value;
             created += value;
@@ -42,9 +46,10 @@ public class MigrationStatistics {
         changed = true;
 
         if (sourcePath != null){
-            String result = String.format("%-20s :: %-25s :: %6s :: %-15s :: %s"
-                    , DateFormatUtils.format(new Date(), "yyyy-MM-dd HH:mm:SS")
+            String result = String.format(Utils.LOG_PATTERN
+                    , DateFormatUtils.format(new Date(), Utils.DATE_FORMAT)
                     , Thread.currentThread().getName()
+                    , cacheSize
                     , executorValue
                     , (warnings + failed + done) + "/" + total,
                     sourcePath);

@@ -83,7 +83,7 @@ public class MigrationCache {
         };
     }
 
-    public synchronized String step(MigrationObjectStatus from, MigrationObjectStatus to, int value, String sourcePath){
-        return statistics.step(from, to, value, executor != null?(executor.getActiveCount() + "(" + executor.getQueue().size() + ")"):"", sourcePath);
+    public String step(MigrationObjectStatus from, MigrationObjectStatus to, int value, String sourcePath, UUID configId){
+        return statistics.step(from, to, value, cacheObjects.get(getConfig(configId)).size(), executor != null?(executor.getActiveCount() + "(" + executor.getQueue().size() + ")"):"", sourcePath);
     }
 }

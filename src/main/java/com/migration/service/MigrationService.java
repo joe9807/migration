@@ -61,7 +61,7 @@ public class MigrationService {
                 .collect(Collectors.toList()));
 
         migrationCache.populateCache(migrationObject.getConfigId(), saved);
-        migrationCache.step(null, MigrationObjectStatus.NEW, saved.size(), null);
+        migrationCache.step(null, MigrationObjectStatus.NEW, saved.size(), null, migrationObject.getConfigId());
     }
 
     private List<MigrationObject> saveAll(List<MigrationObject> objects){
@@ -76,7 +76,7 @@ public class MigrationService {
         MigrationObjectStatus from = migrationObject.getStatus();
         migrationObject.setStatus(to);
         migrationRepository.save(migrationObject).toFuture().join();
-        log.info(migrationCache.step(from, to, 1, migrationObject.getSourcePath()));
+        log.info(migrationCache.step(from, to, 1, migrationObject.getSourcePath(), migrationObject.getConfigId()));
     }
 
     public void sendStatistics(){
