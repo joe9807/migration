@@ -29,14 +29,14 @@ public class Utils {
         String monthsStr = (months != 0 ? (months + " M ") : "");
         String yearsStr = (years != 0 ? (years + " y ") : "");
 
-        String result = new StringBuilder(yearsStr)
-                .append(monthsStr)
-                .append(weeksStr)
-                .append(daysStr)
-                .append(hoursStr)
-                .append(minutesStr)
-                .append(secondsStr)
-                .append(millisStr).toString();
+        String result = yearsStr +
+                monthsStr +
+                weeksStr +
+                daysStr +
+                hoursStr +
+                minutesStr +
+                secondsStr +
+                millisStr;
 
         return result.isEmpty()?"0 ms":result;
     }
