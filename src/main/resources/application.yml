@@ -1,5 +1,6 @@
 app:
   objectsLimit: 100
+  cacheSize: 100000
 
 server:
   port: ${SERVER_PORT}

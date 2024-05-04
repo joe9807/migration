@@ -1,5 +1,6 @@
 package com.migration.cache;
 
+import com.migration.configuration.AppConfig;
 import com.migration.configuration.MigrationConfig;
 import com.migration.dto.MigrationStatistics;
 import com.migration.entity.MigrationObject;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class MigrationCache {
+    private final AppConfig appConfig;
     private final List<MigrationMapper> mappers;
     private final Map<MigrationConfig, Set<MigrationObject>> cacheObjects = new ConcurrentHashMap<>();
 
@@ -38,7 +40,10 @@ public class MigrationCache {
     }
 
     public void populateCache(UUID configId, List<MigrationObject> objects){
-        cacheObjects.get(getConfig(configId)).addAll(objects);
+        Set<MigrationObject> set = cacheObjects.get(getConfig(configId));
+        if (set.size()<appConfig.getCacheSize()) {
+            set.addAll(objects.stream().limit(appConfig.getCacheSize()).collect(Collectors.toSet()));
+        }
     }
 
     public Set<MigrationObject> getNewMigrationObjects(MigrationConfig config){

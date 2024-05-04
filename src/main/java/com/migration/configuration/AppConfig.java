@@ -9,4 +9,5 @@ import org.springframework.context.annotation.Configuration;
 @Data
 public class AppConfig {
     private int objectsLimit;
+    private int cacheSize;
 }
