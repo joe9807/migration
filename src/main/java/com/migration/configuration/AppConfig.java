@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "app")
 @Data
 public class AppConfig {
-    private int objectsLimit;
+    private int poolSize;
     private int cacheSize;
+    private int objectsLimit;
 }

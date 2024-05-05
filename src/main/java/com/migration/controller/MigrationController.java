@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -90,16 +89,6 @@ public class MigrationController {
             return CompletableFuture.allOf().join();
         });
         return result;
-    }
-
-    @GetMapping(value = "/monitor")
-    @Operation(summary = "Мониторинг процесса миграции")
-    public Flux<ServerSentEvent<String>> getMigrationObjects(UUID configId, Long id){
-        return migrationService.getAllMigrationObjects(configId, id).map(object-> ServerSentEvent.<String>builder()
-                .id(String.valueOf(object.getId()))
-                .event("message")
-                .data(object.getSourcePath())
-                .build());
     }
 
     @GetMapping(value = "/config")

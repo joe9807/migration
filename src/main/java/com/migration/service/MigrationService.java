@@ -1,6 +1,7 @@
 package com.migration.service;
 
 import com.migration.cache.MigrationCache;
+import com.migration.configuration.AppConfig;
 import com.migration.configuration.MigrationConfig;
 import com.migration.entity.MigrationObject;
 import com.migration.enums.MigrationObjectStatus;
@@ -11,9 +12,7 @@ import com.migration.websocket.WebSocketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -22,13 +21,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class MigrationService {
+    private final AppConfig appConfig;
     private final MigrationRepository migrationRepository;
     private final MigrationCache migrationCache;
     private final WebSocketService webSocketService;
-
-    public Flux<MigrationObject> getAllMigrationObjects(UUID configId, Long id){
-        return migrationRepository.findByConfigIdOrderByIdAsc(configId, id);
-    }
 
     public void deleteAll(){
         migrationRepository.deleteAll().toFuture().join();
@@ -60,7 +56,7 @@ public class MigrationService {
                         .configId(migrationObject.getConfigId()).build())
                 .collect(Collectors.toList()));
 
-        migrationCache.populateCache(migrationObject.getConfigId(), saved);
+        migrationCache.populateCacheFromWorker(migrationObject.getConfigId(), saved);
         migrationCache.step(null, MigrationObjectStatus.NEW, saved.size(), null, migrationObject.getConfigId());
     }
 
@@ -87,7 +83,7 @@ public class MigrationService {
     }
 
     public MigrationObject createRootObject(MigrationConfig config){
-        MigrationObject rootObject = migrationRepository.save(MigrationObject.builder()
+        return migrationRepository.save(MigrationObject.builder()
                 .type(config.getSourceContext().getInitObject().getType())
                 .sourceId(config.getSourceContext().getInitObject().getId())
                 .sourcePath(config.getSourceContext().getInitObject().getPath())
@@ -95,11 +91,13 @@ public class MigrationService {
                 .status(MigrationObjectStatus.NEW)
                 .configId(config.getId())
                 .build()).toFuture().join();
-        migrationCache.populateCache(config.getId(), Collections.singletonList(rootObject));
-        return rootObject;
     }
 
     public void capture(List<Long> ids){
         migrationRepository.capture(ids, MigrationObjectStatus.CAPTURED).toFuture().join();
+    }
+
+    public List<MigrationObject> getNewMigrationObjects(MigrationConfig config){
+        return migrationRepository.findByStatusAndConfigIdWithLimit(MigrationObjectStatus.NEW, config.getId(), appConfig.getCacheSize()).collectList().toFuture().join();
     }
 }

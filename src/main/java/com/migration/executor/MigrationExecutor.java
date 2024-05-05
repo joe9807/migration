@@ -49,23 +49,26 @@ public class MigrationExecutor {
                 executedTasks += executeTasks(config);
             }
 
+            if (migrationCache.isNeedToUpdate(config)){
+                migrationCache.populateCacheFromDatabase(config, migrationService.getNewMigrationObjects(config));
+                log.info("Cache was populated from database!");
+            }
+
             migrationService.sendStatistics();
-        } while (completedTasks != executedTasks);
+        } while (completedTasks != executedTasks || !migrationCache.isEmpty(config));
 
         migrationService.sendStatistics();
         log.info("migrationExecutor: {}; executedTasks: {}", migrationCache.getExecutor(), executedTasks);
     }
 
     private long executeTasks(MigrationConfig config) {
-        Set<MigrationObject> objects = migrationCache.getNewMigrationObjects(config).stream()
+        Set<MigrationObject> objects = migrationCache.getObjects(config).stream()
                 .limit(appConfig.getObjectsLimit()).collect(Collectors.toSet());
 
-        migrationService.capture(objects.stream()
-                .map(MigrationObject::getId)
-                .collect(Collectors.toList()));
-
+        migrationService.capture(objects.stream().map(MigrationObject::getId).collect(Collectors.toList()));
         migrationCache.evict(config, objects);
         migrationCache.step(MigrationObjectStatus.NEW, MigrationObjectStatus.CAPTURED, objects.size(), null, config.getId());
+
         objects.forEach(object-> migrationCache.getExecutor().execute(new MigrationWorker(object, migrationService)));
         return objects.size();
     }

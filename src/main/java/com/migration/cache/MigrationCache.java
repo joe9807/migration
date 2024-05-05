@@ -13,10 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -26,34 +23,49 @@ import java.util.stream.Collectors;
 public class MigrationCache {
     private final AppConfig appConfig;
     private final List<MigrationMapper> mappers;
-    private final Map<MigrationConfig, Set<MigrationObject>> cacheObjects = new ConcurrentHashMap<>();
+    private final Map<MigrationConfig, ConcurrentHashSet<MigrationObject, Boolean>> cacheObjects = new ConcurrentHashMap<>();
 
     @Getter
     private MigrationStatistics statistics;
-    private Map<MigrationType, MigrationMapper> cacheMappers;
+
     @Getter
     private ThreadPoolExecutor executor;
 
+    private Map<MigrationType, MigrationMapper> cacheMappers;
+    private volatile boolean isObjectsNotInCache;
+
     public void init(MigrationConfig config){
+        isObjectsNotInCache = true;//because root object not in cache on start of migration
         statistics = new MigrationStatistics();
-        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50, getFactory());
+        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(appConfig.getPoolSize(), getFactory());
         cacheMappers = mappers.stream().collect(Collectors.toMap(MigrationMapper::getMapperKey, Function.identity()));
-        cacheObjects.put(config, ConcurrentHashMap.newKeySet());
+        cacheObjects.put(config, new ConcurrentHashSet<>(Boolean.TRUE, appConfig.getCacheSize()));
     }
 
-    public void populateCache(UUID configId, List<MigrationObject> objects){
-        Set<MigrationObject> set = cacheObjects.get(getConfig(configId));
-        if (set.size()<appConfig.getCacheSize()) {
-            set.addAll(objects.stream().limit(appConfig.getCacheSize()).collect(Collectors.toSet()));
+    public void populateCacheFromDatabase(MigrationConfig config, List<MigrationObject> objects){
+        isObjectsNotInCache = !cacheObjects.get(config).addAllObjects(objects) || objects.size() == appConfig.getCacheSize();
+    }
+
+    public void populateCacheFromWorker(UUID configId, List<MigrationObject> objects){
+        if (!cacheObjects.get(getConfig(configId)).addAllObjects(objects)){
+            isObjectsNotInCache = true;
         }
     }
 
-    public Set<MigrationObject> getNewMigrationObjects(MigrationConfig config){
-        return cacheObjects.get(config);
+    public Set<MigrationObject> getObjects(MigrationConfig config){
+        return cacheObjects.get(config).keySet();
     }
 
     public void evict(MigrationConfig config, Set<MigrationObject> objects){
-        cacheObjects.get(config).removeAll(objects);
+        cacheObjects.get(config).keySet().removeAll(objects);
+    }
+
+    public boolean isNeedToUpdate(MigrationConfig config){
+        return isEmpty(config) && isObjectsNotInCache;
+    }
+
+    public boolean isEmpty(MigrationConfig config){
+        return cacheObjects.get(config).isEmpty();
     }
 
     public void finish(MigrationConfig config){
