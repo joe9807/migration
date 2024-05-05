@@ -35,7 +35,7 @@ public class MigrationCache {
     private volatile boolean isObjectsNotInCache;
 
     public void init(MigrationConfig config){
-        isObjectsNotInCache = true;//because root object not in cache on start of migration
+        isObjectsNotInCache = true;//because root object not in cache on start of migration or in case of resume
         statistics = new MigrationStatistics();
         executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(appConfig.getPoolSize(), getFactory());
         cacheMappers = mappers.stream().collect(Collectors.toMap(MigrationMapper::getMapperKey, Function.identity()));
