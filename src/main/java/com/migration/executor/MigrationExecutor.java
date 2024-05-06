@@ -6,11 +6,13 @@ import com.migration.configuration.MigrationConfig;
 import com.migration.entity.MigrationObject;
 import com.migration.enums.MigrationObjectStatus;
 import com.migration.service.MigrationService;
+import com.migration.utils.Utils;
 import com.migration.worker.MigrationWorker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,14 +24,15 @@ public class MigrationExecutor {
     private final MigrationCache migrationCache;
     private final MigrationService migrationService;
 
-    public void start(MigrationConfig config, boolean resume){
+    public String start(MigrationConfig config){
+        Date startDate = new Date();
         migrationCache.init(config);
 
         if (migrationCache.getMigrationMapper(config.getType()) == null){
             throw new RuntimeException("There is no corresponding mapper for "+config.getType()+" MigrationType. Please implement this mapper!");
         }
 
-        if (!resume) {
+        if (!config.isResume()) {
             MigrationObject rootObject = migrationService.createRootObject(config);
             migrationCache.step(null, rootObject.getStatus(), 1, rootObject.getSourcePath(), config.getId());
         }
@@ -37,6 +40,7 @@ public class MigrationExecutor {
         run(config);
 
         migrationCache.finish(config);
+        return Utils.getTimeElapsed(startDate);
     }
 
     public void run(MigrationConfig config){

@@ -1,5 +1,6 @@
 package com.migration.configuration;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.migration.context.FakeContext;
 import com.migration.context.FileSystemContext;
 import com.migration.context.GenericContext;
@@ -18,6 +19,9 @@ public class MigrationConfig {
     private MigrationType type;
     private GenericContext sourceContext;
     private GenericContext targetContext;
+
+    @JsonIgnore
+    private boolean resume;
 
     public static MigrationConfig getConfigExample(String configType){
         return switch (MigrationType.valueOf(configType)) {

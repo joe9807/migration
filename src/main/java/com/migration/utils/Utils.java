@@ -1,10 +1,13 @@
 package com.migration.utils;
 
+import java.util.Date;
+
 public class Utils {
     public static String LOG_PATTERN = "%-20s :: %-20s :: %-8s :: %3s/%-3s :: %8s/%-8s :: %s";
     public static String DATE_FORMAT = "yyyy-MM-dd HH:mm:SS";
 
-    public static String getTimeElapsed(long elapsed) {
+    public static String getTimeElapsed(Date date) {
+        long elapsed = new Date().getTime()-date.getTime();
         long milliseconds = elapsed % 1000;
         elapsed = elapsed / 1000;
         long seconds = elapsed % 60;
@@ -38,6 +41,6 @@ public class Utils {
                 secondsStr +
                 millisStr;
 
-        return result.isEmpty()?"0 ms":result;
+        return "Time elapsed "+(result.isEmpty()?"0 ms":result);
     }
 }

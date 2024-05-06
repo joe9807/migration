@@ -72,7 +72,8 @@ public class MigrationService {
         MigrationObjectStatus from = migrationObject.getStatus();
         migrationObject.setStatus(to);
         migrationRepository.save(migrationObject).toFuture().join();
-        log.info(migrationCache.step(from, to, 1, migrationObject.getSourcePath(), migrationObject.getConfigId()));
+        String result = migrationCache.step(from, to, 1, migrationObject.getSourcePath(), migrationObject.getConfigId());
+        log.info(result);
     }
 
     public void sendStatistics(){

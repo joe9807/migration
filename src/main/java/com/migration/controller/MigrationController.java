@@ -44,7 +44,7 @@ public class MigrationController {
         Date date = new Date();
         return Mono.fromFuture(migrationServiceShort.handle(config.getSourceContext().getInitObject()).thenApply(list->{
             log.info("ForkJoinPool {}", ForkJoinPool.commonPool());
-            log.info("Migration took {}", Utils.getTimeElapsed(new Date().getTime() - date.getTime()));
+            log.info("Migration took {}", Utils.getTimeElapsed(date));
             return list;
         })).flatMapMany(Flux::fromStream);
     }
@@ -55,7 +55,7 @@ public class MigrationController {
         Date date = new Date();
         return migrationServiceShort.handleFlux(config.getSourceContext().getInitObject()).doOnComplete(()->{
             log.info("ForkJoinPool {}", ForkJoinPool.commonPool());
-            log.info("Migration took {}", Utils.getTimeElapsed(new Date().getTime() - date.getTime()));
+            log.info("Migration took {}", Utils.getTimeElapsed(date));
         });
     }
 
@@ -68,26 +68,25 @@ public class MigrationController {
             migrationService.deleteAll();
         }
 
-        AtomicBoolean resume = new AtomicBoolean(false);
-        if (config.getId() != null) {
-            resume.set(true);
-        } else {
+        config.setResume(config.getId() != null);
+
+        if (config.getId() == null) {
             config.setId(UUID.randomUUID());
         }
 
         String url = String.format("http://localhost:5173/?configId=%s", config.getId());
-        String result = String.format("%s migration %s with id: %s; %s; %s\n%s", resume.get()?"Resumed":"Started", LocalDateTime.now(), config.getId()
+        String result = String.format("%s migration %s with id: %s; %s; %s\n%s", config.isResume()?"Resumed":"Started", LocalDateTime.now(), config.getId()
                 , config.getSourceContext(), config.getTargetContext(), url);
 
-        CompletableFuture.runAsync(() -> {
-            Date date = new Date();
-            log.info(result);
-            migrationExecutor.start(config, resume.get());
-            log.info("Time elapsed {}", Utils.getTimeElapsed(new Date().getTime()-date.getTime()));
-        }).exceptionally(e->{
+        CompletableFuture.completedFuture(config)
+                .thenApply(migrationExecutor::start)
+                .thenAccept(log::info)
+                .exceptionally(e->{
             log.error("Error during migration: ", e);
-            return CompletableFuture.allOf().join();
+            return null;
         });
+
+        log.info(result);
         return result;
     }
 
