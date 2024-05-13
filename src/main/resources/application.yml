@@ -8,9 +8,9 @@ server:
 spring:
   application:
     name: migration
-  r2dbc:
+  datasource:
     password: postgres
-    url: r2dbc:postgresql://${SERVER_HOST:localhost}:5432/migration
+    url: jdbc:postgresql://${SERVER_HOST:localhost}:5432/migration
     username: postgres
   jpa:
     hibernate:

@@ -3,23 +3,18 @@ package com.migration.controller;
 import com.migration.configuration.MigrationConfig;
 import com.migration.executor.MigrationExecutor;
 import com.migration.service.MigrationService;
-import com.migration.service.MigrationServiceShort;
 import com.migration.utils.Utils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
@@ -28,7 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @CrossOrigin
 public class MigrationController {
     private final MigrationService migrationService;
-    private final MigrationServiceShort migrationServiceShort;
     private final MigrationExecutor migrationExecutor;
 
     @GetMapping("/generate")
@@ -36,27 +30,6 @@ public class MigrationController {
     @Parameter(name = "configType", description = "configType", schema = @Schema(type = "string", allowableValues = {"FakeToFake", "FakeToFS", "FSToFake", "FSToFS"}))
     public MigrationConfig getConfig(String configType){
         return MigrationConfig.getConfigExample(configType);
-    }
-
-    @PostMapping(value = "/startFutures", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @Operation(summary = "Старт миграции по конфигу")
-    public Flux<String> startMigration(@RequestBody MigrationConfig config){
-        Date date = new Date();
-        return Mono.fromFuture(migrationServiceShort.handle(config.getSourceContext().getInitObject()).thenApply(list->{
-            log.info("ForkJoinPool {}", ForkJoinPool.commonPool());
-            log.info("Migration took {}", Utils.getTimeElapsed(new Date().getTime() - date.getTime()));
-            return list;
-        })).flatMapMany(Flux::fromStream);
-    }
-
-    @PostMapping(value = "/startFlux", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @Operation(summary = "Старт миграции по конфигу")
-    public Flux<String> startFluxMigration(@RequestBody MigrationConfig config){
-        Date date = new Date();
-        return migrationServiceShort.handleFlux(config.getSourceContext().getInitObject()).doOnComplete(()->{
-            log.info("ForkJoinPool {}", ForkJoinPool.commonPool());
-            log.info("Migration took {}", Utils.getTimeElapsed(new Date().getTime() - date.getTime()));
-        });
     }
 
     @PostMapping(value = "/startExecutor")

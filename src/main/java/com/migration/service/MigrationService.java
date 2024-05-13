@@ -11,8 +11,11 @@ import com.migration.repository.MigrationRepository;
 import com.migration.websocket.WebSocketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,7 +30,7 @@ public class MigrationService {
     private final WebSocketService webSocketService;
 
     public void deleteAll(){
-        migrationRepository.deleteAll().toFuture().join();
+        migrationRepository.deleteAll();
     }
 
     public GenericObject getSourceObject(MigrationObject object){
@@ -45,7 +48,7 @@ public class MigrationService {
 
     public void failObject(MigrationObject migrationObject){
         migrationObject.setStatus(MigrationObjectStatus.FAILED);
-        migrationRepository.save(migrationObject).toFuture().join();
+        migrationRepository.save(migrationObject);
     }
 
     public void saveChildren(MigrationObject migrationObject, GenericObject source, GenericObject target){
@@ -61,7 +64,7 @@ public class MigrationService {
     }
 
     private List<MigrationObject> saveAll(List<MigrationObject> objects){
-        return migrationRepository.saveAll(objects).collectList().toFuture().join();
+        return new ArrayList<>(migrationRepository.saveAll(objects));
     }
 
     public MigrationConfig getMigrationConfig(UUID configId){
@@ -71,7 +74,7 @@ public class MigrationService {
     public void complete(MigrationObject migrationObject, MigrationObjectStatus to){
         MigrationObjectStatus from = migrationObject.getStatus();
         migrationObject.setStatus(to);
-        migrationRepository.save(migrationObject).toFuture().join();
+        migrationRepository.save(migrationObject);
         log.info(migrationCache.step(from, to, 1, migrationObject.getSourcePath(), migrationObject.getConfigId()));
     }
 
@@ -90,14 +93,15 @@ public class MigrationService {
                 .targetPath(config.getTargetContext().getInitObject().getPath())
                 .status(MigrationObjectStatus.NEW)
                 .configId(config.getId())
-                .build()).toFuture().join();
+                .build());
     }
 
     public void capture(List<Long> ids){
-        migrationRepository.capture(ids, MigrationObjectStatus.CAPTURED).toFuture().join();
+        migrationRepository.capture(ids, MigrationObjectStatus.CAPTURED);
     }
 
     public List<MigrationObject> getNewMigrationObjects(MigrationConfig config){
-        return migrationRepository.findByStatusAndConfigIdWithLimit(MigrationObjectStatus.NEW, config.getId(), appConfig.getCacheSize()).collectList().toFuture().join();
+        Pageable pageable = PageRequest.of(0, appConfig.getCacheSize());
+        return migrationRepository.findByStatusAndConfigIdWithLimit(MigrationObjectStatus.NEW, config.getId(), pageable).toList();
     }
 }

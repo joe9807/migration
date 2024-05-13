@@ -4,15 +4,12 @@ import com.migration.enums.MigrationObjectStatus;
 import com.migration.enums.MigrationObjectType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.UUID;
 
 @Data
 @Builder
-@Entity
-@Table(name="objects")
+@Entity(name = "objects")
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = {"id"})
