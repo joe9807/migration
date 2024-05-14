@@ -26,4 +26,8 @@ public interface MigrationRepository extends JpaRepository<MigrationObject, Long
     @Modifying
     @Query(value = "UPDATE objects set status = :status where id IN (:ids)")
     void update(List<Long> ids, MigrationObjectStatus status);
+
+    @Modifying
+    @Query(value = "delete from objects", nativeQuery = true)
+    void deleteAll();
 }
