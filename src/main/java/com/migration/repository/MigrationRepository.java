@@ -28,6 +28,6 @@ public interface MigrationRepository extends JpaRepository<MigrationObject, Long
     void update(List<Long> ids, MigrationObjectStatus status);
 
     @Modifying
-    @Query(value = "delete from objects", nativeQuery = true)
+    @Query(value = "truncate table objects", nativeQuery = true)
     void deleteAll();
 }
